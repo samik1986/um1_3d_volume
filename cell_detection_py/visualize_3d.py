@@ -21,6 +21,11 @@ def visualize():
     swc_file = 'centroids.swc'
     
     if not os.path.exists(input_file):
+        input_file = os.path.join('..', input_file)
+    if not os.path.exists(swc_file):
+        swc_file = os.path.join('..', swc_file)
+    
+    if not os.path.exists(input_file):
         print(f"File {input_file} not found.")
         return
 

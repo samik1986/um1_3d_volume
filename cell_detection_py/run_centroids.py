@@ -3,9 +3,14 @@ import numpy as np
 import scipy.ndimage as ndi
 from skimage.measure import regionprops, label
 import time
+import os
+
 
 def process_volume():
     input_file = 'F0200_multichannel_cmle_ch04.tif'
+    if not os.path.exists(input_file):
+        input_file = os.path.join('..', input_file)
+        
     print(f"Opening Tiff {input_file}...")
     
     with tifffile.TiffFile(input_file) as tif:
