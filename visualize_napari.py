@@ -48,7 +48,7 @@ def visualize_napari():
             name='Centroids', 
             size=15, 
             face_color='red', 
-            edge_color='white',
+            border_color='white',
             symbol='disc',
             n_dimensional=True # Allow points to be seen across slices if needed
         )
