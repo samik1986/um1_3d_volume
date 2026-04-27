@@ -3,10 +3,24 @@ from scipy.spatial import KDTree
 import time
 import os
 import argparse
+import pandas as pd
 
 # Import specialized detection functions
 import run_centroids_DAPI
 import run_centroids_FP
+
+def load_swc(filename):
+    """Loads centroids from an SWC file into a numpy array (x, y, z)."""
+    if not os.path.exists(filename):
+        return None
+    try:
+        # SWC format: id type x y z radius parent
+        data = pd.read_csv(filename, sep=' ', comment='#', header=None, 
+                          names=['id', 'type', 'x', 'y', 'z', 'r', 'p'])
+        return data[['x', 'y', 'z']].values
+    except Exception as e:
+        print(f"Error loading SWC {filename}: {e}")
+        return None
 
 def save_swc(centroids, filename, comment=""):
     """Saves centroids to an SWC file."""
@@ -33,17 +47,28 @@ def main():
     parser.add_argument('--output_fp', type=str, default='centroids_FP.swc', help='Output raw FP SWC')
     parser.add_argument('--output_final', type=str, default='centroids_FP_final.swc', help='Output filtered FP SWC')
     parser.add_argument('--dist_thresh', type=float, default=10.0, help='Proximity threshold in pixels')
+    parser.add_argument('--force', action='store_true', help='Force re-detection even if SWC files exist')
     args = parser.parse_args()
 
     t_start = time.time()
 
-    # 1. Detect DAPI using run_centroids_DAPI
-    print("\n--- Phase 1: DAPI Channel Detection ---")
-    centroids_dapi = run_centroids_DAPI.process_volume(input_file=args.dapi, output_file=args.output_dapi)
+    # 1. Handle DAPI centroids
+    print("\n--- Phase 1: DAPI Channel ---")
+    if not args.force and os.path.exists(args.output_dapi):
+        print(f"Found existing DAPI centroids at {args.output_dapi}. Skipping detection.")
+        centroids_dapi = load_swc(args.output_dapi)
+    else:
+        print(f"Detecting DAPI centroids from {args.dapi}...")
+        centroids_dapi = run_centroids_DAPI.process_volume(input_file=args.dapi, output_file=args.output_dapi)
 
-    # 2. Detect FP using run_centroids_FP
-    print("\n--- Phase 2: FP Channel Detection ---")
-    centroids_fp = run_centroids_FP.process_volume(input_file=args.fp, output_file=args.output_fp)
+    # 2. Handle FP centroids
+    print("\n--- Phase 2: FP Channel ---")
+    if not args.force and os.path.exists(args.output_fp):
+        print(f"Found existing FP centroids at {args.output_fp}. Skipping detection.")
+        centroids_fp = load_swc(args.output_fp)
+    else:
+        print(f"Detecting FP centroids from {args.fp}...")
+        centroids_fp = run_centroids_FP.process_volume(input_file=args.fp, output_file=args.output_fp)
 
     # 3. Filter FP centroids based on DAPI proximity
     print(f"\n--- Phase 3: Spatial Filtering (Proximity <= {args.dist_thresh}px) ---")
