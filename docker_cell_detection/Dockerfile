@@ -11,13 +11,13 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements file into the container
-COPY docker_cell_detection/requirements.txt .
+COPY requirements.txt .
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the python scripts into the container
-COPY cell_detection_py/ /app/cell_detection_py/
+# Copy all python scripts from the current folder into the container
+COPY . /app/
 
 # Create a data directory for mounting
 RUN mkdir /data
@@ -27,5 +27,5 @@ ENV PYTHONUNBUFFERED=1
 
 # Default command to run the detection script
 # Usage: docker run -v /path/to/data:/data cell-detection --input /data/volume.tif --output /data/centroids.swc
-ENTRYPOINT ["python", "cell_detection_py/run_centroids.py"]
+ENTRYPOINT ["python", "run_centroids.py"]
 CMD ["--input", "/data/F0200_multichannel_cmle_ch04.tif", "--output", "/data/centroids.swc"]
