@@ -39,16 +39,42 @@ def save_swc(centroids, filename, comment=""):
             f.write(f"{i+1} 2 {c[0]:.3f} {c[1]:.3f} {c[2]:.3f} 1.0 -1\n")
     print(f"Saved {len(centroids)} centroids to {filename}")
 
+def save_scaled_swc(centroids, filename, scale_factors, comment=""):
+    """Applies scale factors and saves to SWC."""
+    if centroids is None or len(centroids) == 0:
+        save_swc(None, filename, comment)
+        return
+
+    sx, sy, sz = scale_factors
+    scaled = centroids * np.array([sx, sy, sz])
+    
+    with open(filename, 'w') as f:
+        f.write(f"# Scaled SWC file. {comment}\n")
+        f.write(f"# Scale factors: X={sx}, Y={sy}, Z={sz}\n")
+        f.write("# id type x y z radius parent\n")
+        for i, c in enumerate(scaled):
+            f.write(f"{i+1} 2 {c[0]:.6f} {c[1]:.6f} {c[2]:.6f} 1.0 -1\n")
+    print(f"Saved {len(scaled)} scaled centroids to {filename}")
+
 def main():
-    parser = argparse.ArgumentParser(description='Run dual-channel cell detection with spatial filtering.')
+    parser = argparse.ArgumentParser(description='Run dual-channel cell detection with spatial filtering and scaling.')
     parser.add_argument('--dapi', type=str, default='F0200_multichannel_cmle_ch04.tif', help='Path to DAPI TIFF')
     parser.add_argument('--fp', type=str, default='F0200_multichannel_cmle_ch03.tif', help='Path to FP TIFF')
+    
     parser.add_argument('--output_dapi', type=str, default='centroids_DAPI.swc', help='Output DAPI SWC')
     parser.add_argument('--output_fp', type=str, default='centroids_FP.swc', help='Output raw FP SWC')
     parser.add_argument('--output_final', type=str, default='centroids_FP_final.swc', help='Output filtered FP SWC')
-    parser.add_argument('--dist_thresh', type=float, default=10.0, help='Proximity threshold in pixels')
+    
+    parser.add_argument('--dist_thresh', type=float, default=120.0, help='Proximity threshold in pixels')
     parser.add_argument('--force', action='store_true', help='Force re-detection even if SWC files exist')
+    
+    # Scaling arguments
+    parser.add_argument('--scale_x', type=float, default=0.1102, help='Scale factor for X')
+    parser.add_argument('--scale_y', type=float, default=0.1102, help='Scale factor for Y')
+    parser.add_argument('--scale_z', type=float, default=0.5, help='Scale factor for Z')
+    
     args = parser.parse_args()
+    scales = (args.scale_x, args.scale_y, args.scale_z)
 
     t_start = time.time()
 
@@ -60,6 +86,10 @@ def main():
     else:
         print(f"Detecting DAPI centroids from {args.dapi}...")
         centroids_dapi = run_centroids_DAPI.process_volume(input_file=args.dapi, output_file=args.output_dapi)
+    
+    # Save scaled DAPI
+    dapi_scaled_name = args.output_dapi.replace('.swc', '_scaled.swc')
+    save_scaled_swc(centroids_dapi, dapi_scaled_name, scales, f"Source: {args.output_dapi}")
 
     # 2. Handle FP centroids
     print("\n--- Phase 2: FP Channel ---")
@@ -69,6 +99,10 @@ def main():
     else:
         print(f"Detecting FP centroids from {args.fp}...")
         centroids_fp = run_centroids_FP.process_volume(input_file=args.fp, output_file=args.output_fp)
+    
+    # Save scaled raw FP
+    fp_scaled_name = args.output_fp.replace('.swc', '_scaled.swc')
+    save_scaled_swc(centroids_fp, fp_scaled_name, scales, f"Source: {args.output_fp}")
 
     # 3. Filter FP centroids based on DAPI proximity
     print(f"\n--- Phase 3: Spatial Filtering (Proximity <= {args.dist_thresh}px) ---")
@@ -82,10 +116,14 @@ def main():
         print(f"Filtered {len(centroids_fp)} FP centroids down to {len(centroids_fp_final)} based on DAPI proximity.")
     else:
         centroids_fp_final = np.array([])
-        print("Warning: One or both channels produced no detections or returned None. Final output will be empty.")
+        print("Warning: One or both channels produced no detections. Final output will be empty.")
 
-    # 4. Save final result
+    # 4. Save final filtered results
     save_swc(centroids_fp_final, args.output_final, f"Spatial filter vs {args.output_dapi} at {args.dist_thresh}px")
+    
+    # Save scaled filtered FP
+    final_scaled_name = args.output_final.replace('.swc', '_scaled.swc')
+    save_scaled_swc(centroids_fp_final, final_scaled_name, scales, f"Filtered source: {args.output_final}")
 
     print(f"\nPipeline completed in {time.time() - t_start:.2f} seconds.")
 
