@@ -19,18 +19,19 @@
 *.m~
 *.asv
 
-# Directories
+# Build and dependencies
+**/build/
+**/_deps/
 w64devkit/
+
+# Data Directories
 Position201/
 quadrants1/
 fp_pipeline_output/
 fp_pipeline_output_old/
-fp_cpp_pipeline/
-fp_pipeline_modules/
-frangi_filter_version2a/
-__pycache__/
 
 # Python
+__pycache__/
 *.pyc
 
 # OS files
