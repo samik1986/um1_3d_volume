@@ -1,0 +1,38 @@
+# Data files (Large binary files)
+*.tif
+*.tiff
+*.mat
+*.nrrd
+*.tgz
+*.zip
+*.7z
+*.tgz
+
+# Results/Artifacts
+*.swc
+*.pptx
+*.png
+*.jpg
+
+# Logs and temporary files
+*.log
+*.m~
+*.asv
+
+# Directories
+w64devkit/
+Position201/
+quadrants1/
+fp_pipeline_output/
+fp_pipeline_output_old/
+fp_cpp_pipeline/
+fp_pipeline_modules/
+frangi_filter_version2a/
+__pycache__/
+
+# Python
+*.pyc
+
+# OS files
+.DS_Store
+Thumbs.db

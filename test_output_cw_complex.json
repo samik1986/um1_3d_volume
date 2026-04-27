@@ -1,0 +1,101 @@
+{
+  "network_type": "1D CW Complex Forest",
+  "cells_0_nodes": [
+    {
+      "node_id": 1,
+      "type": "boundary",
+      "coord": [
+        10,
+        10
+      ]
+    },
+    {
+      "node_id": 2,
+      "type": "junction",
+      "coord": [
+        50,
+        10
+      ]
+    },
+    {
+      "node_id": 3,
+      "type": "boundary",
+      "coord": [
+        10,
+        50
+      ]
+    }
+  ],
+  "cells_1_linestrings": [
+    {
+      "line_id": 1,
+      "endpoints": {
+        "source_id": 1,
+        "target_id": 2
+      },
+      "geometry": [
+        [
+          10,
+          10
+        ],
+        [
+          20,
+          10
+        ],
+        [
+          30,
+          10
+        ],
+        [
+          40,
+          10
+        ],
+        [
+          50,
+          10
+        ]
+      ],
+      "forest_relation": {
+        "connects": [
+          "boundary",
+          "junction"
+        ]
+      }
+    },
+    {
+      "line_id": 2,
+      "endpoints": {
+        "source_id": 3,
+        "target_id": 2
+      },
+      "geometry": [
+        [
+          10,
+          50
+        ],
+        [
+          10,
+          40
+        ],
+        [
+          10,
+          30
+        ],
+        [
+          10,
+          20
+        ],
+        [
+          50,
+          10
+        ]
+      ],
+      "forest_relation": {
+        "connects": [
+          "boundary",
+          "junction"
+        ]
+      }
+    }
+  ]
+}
