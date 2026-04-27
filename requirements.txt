@@ -1,0 +1,6 @@
+tifffile
+numpy
+scipy
+scikit-image
+pandas
+plotly
