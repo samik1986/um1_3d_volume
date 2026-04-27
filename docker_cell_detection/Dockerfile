@@ -25,7 +25,7 @@ RUN mkdir /data
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 
-# Default command to run the detection script
-# Usage: docker run -v /path/to/data:/data cell-detection --input /data/volume.tif --output /data/centroids.swc
-ENTRYPOINT ["python", "run_centroids.py"]
-CMD ["--input", "/data/F0200_multichannel_cmle_ch04.tif", "--output", "/data/centroids.swc"]
+# Default command to run the pipeline
+# Usage: docker run -v /path/to/data:/data cell-detection --dapi /data/ch04.tif --fp /data/ch03.tif
+ENTRYPOINT ["python", "run_pipeline.py"]
+CMD ["--dapi", "/data/F0200_multichannel_cmle_ch04.tif", "--fp", "/data/F0200_multichannel_cmle_ch03.tif"]
