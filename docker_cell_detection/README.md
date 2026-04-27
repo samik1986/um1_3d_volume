@@ -4,6 +4,7 @@ This pipeline provides a robust, memory-efficient solution for detecting 3D cell
 
 ## Features
 
+-   **Parallel Processing**: High-speed detection using multiple CPU cores via `ProcessPoolExecutor`.
 -   **Memory Efficient**: Processes large 3D TIFF volumes in overlapping blocks (tiling) to avoid Out-Of-Memory (OOM) errors.
 -   **Dual-Channel Validation**: Detects centroids in both DAPI and FP channels. Validates FP detections by ensuring a DAPI centroid exists within a specified spatial proximity.
 -   **Automatic Scaling**: Converts voxel-space coordinates (pixels) into physical units using provided resolution factors.
@@ -28,26 +29,34 @@ docker build -t cell-detection -f docker_cell_detection/Dockerfile .
 
 ## Usage
 
-### 1. Running the Full Pipeline (Local)
-The master script is `run_pipeline.py`. It orchestrates detection, filtering, and scaling.
+### 1. Running the Standard Pipeline (Sequential)
+Best for machines with limited RAM. It caches results automatically.
 
 ```bash
 python run_pipeline.py --dapi ch04.tif --fp ch03.tif --dist_thresh 120.0
 ```
 
-### 2. Running via Docker
+### 2. Running the Parallel Pipeline (High Speed)
+Leverages multiple CPU cores. Recommended for machines with 16GB+ RAM.
+
+```bash
+python run_pipeline_parallel.py --workers 4 --dist_thresh 120.0
+```
+
+### 3. Running via Docker
 Mount your data directory to `/data` in the container:
 
 ```bash
 docker run -v "C:/path/to/data:/data" cell-detection --dapi /data/ch04.tif --fp /data/ch03.tif
 ```
 
-### 3. Core Arguments
+## Core Arguments
 
 | Argument | Default | Description |
 | :--- | :--- | :--- |
 | `--dapi` | `F0200...ch04.tif` | Path to the DAPI channel volume. |
 | `--fp` | `F0200...ch03.tif` | Path to the FP channel volume. |
+| `--workers` | `4` | (Parallel only) Number of CPU cores to use. |
 | `--dist_thresh` | `120.0` | Max distance (pixels) between FP and DAPI for validation. |
 | `--force` | `False` | Force re-detection even if SWC files exist. |
 | `--scale_x/y` | `0.1102` | Resolution in XY plane. |
