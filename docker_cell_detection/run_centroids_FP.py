@@ -82,7 +82,7 @@ def process_volume(input_file=None, output_file=None):
                 props = regionprops(labeled_mask)
                 centroids = []
                 for p in props:
-                    if p.area >= 1:
+                    if p.area >= 40:
                         centroids.append(p.centroid) # returns (y, x, z)
                 
                 if not centroids:
