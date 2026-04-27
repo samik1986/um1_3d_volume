@@ -119,6 +119,8 @@ def process_volume(input_file=None, output_file=None):
             for i, c in enumerate(all_centroids):
                 f.write(f"{i+1} 2 {c[0]:.3f} {c[1]:.3f} {c[2]:.3f} 1.0 -1\n")
         print("Done.")
+        return np.array(all_centroids)
+    return np.array([])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Detect 3D cell centroids in FP TIFF volume.')
