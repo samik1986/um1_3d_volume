@@ -110,6 +110,7 @@ def main():
     parser.add_argument('--fp', type=str, default='F0200_multichannel_cmle_ch03.tif')
     parser.add_argument('--workers', type=int, default=4, help='Number of parallel processes')
     parser.add_argument('--dist_thresh', type=float, default=120.0)
+    parser.add_argument('--min_area_fp', type=int, default=150, help='Minimum area for FP centroids')
     args = parser.parse_args()
 
     t_start = time.time()
@@ -121,7 +122,7 @@ def main():
     save_scaled_swc(c_dapi, 'centroids_DAPI_scaled.swc', scales)
 
     print("\n--- Phase 2: Parallel FP Detection ---")
-    c_fp = detect_centroids_parallel(args.fp, min_area=40, max_workers=args.workers)
+    c_fp = detect_centroids_parallel(args.fp, min_area=args.min_area_fp, max_workers=args.workers)
     save_swc(c_fp, 'centroids_FP.swc')
     save_scaled_swc(c_fp, 'centroids_FP_scaled.swc', scales)
 

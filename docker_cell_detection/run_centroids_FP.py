@@ -7,7 +7,7 @@ import os
 import argparse
 
 
-def process_volume(input_file=None, output_file=None):
+def process_volume(input_file=None, output_file=None, min_area=150):
     if input_file is None:
         input_file = 'F0200_multichannel_cmle_ch03.tif'
         if not os.path.exists(input_file):
@@ -82,7 +82,7 @@ def process_volume(input_file=None, output_file=None):
                 props = regionprops(labeled_mask)
                 centroids = []
                 for p in props:
-                    if p.area >= 40:
+                    if p.area >= min_area:
                         centroids.append(p.centroid) # returns (y, x, z)
                 
                 if not centroids:
@@ -126,6 +126,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Detect 3D cell centroids in FP TIFF volume.')
     parser.add_argument('--input', type=str, help='Path to the input TIFF file')
     parser.add_argument('--output', type=str, help='Path to the output SWC file')
+    parser.add_argument('--min_area', type=int, default=150, help='Minimum area (pixels) for a cell to be kept')
     args = parser.parse_args()
     
-    process_volume(input_file=args.input, output_file=args.output)
+    process_volume(input_file=args.input, output_file=args.output, min_area=args.min_area)

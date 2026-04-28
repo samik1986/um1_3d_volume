@@ -66,6 +66,7 @@ def main():
     parser.add_argument('--output_final', type=str, default='centroids_FP_final.swc', help='Output filtered FP SWC')
     
     parser.add_argument('--dist_thresh', type=float, default=120.0, help='Proximity threshold in pixels')
+    parser.add_argument('--min_area_fp', type=int, default=150, help='Minimum area for FP centroids')
     parser.add_argument('--force', action='store_true', help='Force re-detection even if SWC files exist')
     
     # Scaling arguments
@@ -98,7 +99,7 @@ def main():
         centroids_fp = load_swc(args.output_fp)
     else:
         print(f"Detecting FP centroids from {args.fp}...")
-        centroids_fp = run_centroids_FP.process_volume(input_file=args.fp, output_file=args.output_fp)
+        centroids_fp = run_centroids_FP.process_volume(input_file=args.fp, output_file=args.output_fp, min_area=args.min_area_fp)
     
     # Save scaled raw FP
     fp_scaled_name = args.output_fp.replace('.swc', '_scaled.swc')
