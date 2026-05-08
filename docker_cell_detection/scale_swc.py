@@ -34,4 +34,4 @@ def scale_swc(input_filename, output_filename, scale_x, scale_y, scale_z):
         print(f"An error occurred: {e}")
 
 if __name__ == '__main__':
-    scale_swc('centroids_FP.swc', 'centroids_FP_scaled.swc', 0.1102, 0.1102, 0.5)
+    scale_swc('centroids_DAPI.swc', 'centroids_DAPI_scaled.swc', 0.1102, 0.1102, 0.5)

@@ -18,7 +18,7 @@ def load_swc(filename):
 
 def visualize_napari():
     input_file = 'F0200_multichannel_cmle_ch04.tif'
-    swc_file = 'centroids.swc'
+    swc_file = 'centroids_DAPI.swc'
     
     if not os.path.exists(input_file):
         input_file = os.path.join('..', input_file)

@@ -1,6 +1,10 @@
 """
 process_centroids.py
 
+Author: Samik Banerjee
+Date: May 8, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+
 Command-line application to convert a directory of SWC files (containing 2D slice centroids) 
 into a 3D CW-Complex JSON format.
 

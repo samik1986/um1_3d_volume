@@ -9,12 +9,12 @@ import argparse
 
 def process_volume(input_file=None, output_file=None):
     if input_file is None:
-        input_file = 'F0200_multichannel_cmle_ch04.tif'
+        input_file = 'F0200_multichannel_cmle_ch03.tif'
         if not os.path.exists(input_file):
             input_file = os.path.join('..', input_file)
     
     if output_file is None:
-        output_file = 'centroids.swc'
+        output_file = 'centroids_FP.swc'
         
     if not os.path.exists(input_file):
         print(f"Error: File {input_file} not found.")

@@ -1,6 +1,10 @@
 """
 utils.py
 
+Author: Samik Banerjee
+Date: May 8, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+
 Helper functions for the centroid_cw_processing module. 
 Contains logic for:
 1. Parsing individual SWC files to extract centroid coordinates.
