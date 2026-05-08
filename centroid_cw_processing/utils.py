@@ -1,3 +1,13 @@
+"""
+utils.py
+
+Helper functions for the centroid_cw_processing module. 
+Contains logic for:
+1. Parsing individual SWC files to extract centroid coordinates.
+2. Building a list of nodes with proper integer 3D coordinates.
+3. Serializing the dataset into a standard 1D CW-Complex JSON structure.
+"""
+
 import os
 import glob
 import pandas as pd

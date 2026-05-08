@@ -1,3 +1,20 @@
+"""
+process_centroids.py
+
+Command-line application to convert a directory of SWC files (containing 2D slice centroids) 
+into a 3D CW-Complex JSON format.
+
+Usage:
+    python process_centroids.py -i <input_dir> -o <output_file>
+
+Arguments:
+    -i, --input  : Path to the directory containing slice-wise SWC files.
+    -o, --output : Filepath where the output CW-Complex JSON will be saved.
+
+Example:
+    python process_centroids.py -i "../a3_ch04_Swc/slices" -o "centroid_cw_complex.json"
+"""
+
 import os
 import argparse
 from utils import parse_swc_files, serialize_to_cw_complex
