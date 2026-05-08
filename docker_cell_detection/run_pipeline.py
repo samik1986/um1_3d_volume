@@ -1,3 +1,14 @@
+"""
+run_pipeline.py (docker_cell_detection)
+
+Author: Samik Banerjee
+Date: May 8, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+
+Orchestrates the dual-channel cell detection pipeline, including spatial filtering, 
+proximity-based matching, and coordinate scaling for SWC export.
+"""
+
 import numpy as np
 from scipy.spatial import KDTree
 import time

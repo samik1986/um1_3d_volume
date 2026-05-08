@@ -1,3 +1,14 @@
+"""
+visualize_3d.py (docker_cell_detection)
+
+Author: Samik Banerjee
+Date: May 8, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+
+3D visualization of cell centroids and volume data using Plotly. 
+Saves an interactive HTML report.
+"""
+
 import tifffile
 import numpy as np
 import plotly.graph_objects as go

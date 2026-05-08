@@ -1,3 +1,13 @@
+"""
+divide_tiff.py
+
+Author: Samik Banerjee
+Date: May 8, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+
+Script to divide large 3D TIFF volumes into spatial quadrants memory-efficiently.
+"""
+
 import tifffile
 import numpy as np
 import os

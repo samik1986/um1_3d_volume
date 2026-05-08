@@ -1,3 +1,13 @@
+"""
+scale_swc.py (docker_cell_detection)
+
+Author: Samik Banerjee
+Date: May 8, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+
+Utility script to scale SWC coordinates by specific voxel resolution factors.
+"""
+
 import pandas as pd
 import os
 

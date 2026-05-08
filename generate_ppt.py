@@ -1,3 +1,13 @@
+"""
+generate_ppt.py
+
+Author: Samik Banerjee
+Date: May 8, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+
+Script to generate PowerPoint presentations summarizing the 3D vessel volume reconstruction pipeline results.
+"""
+
 import pptx
 from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN

@@ -1,3 +1,14 @@
+"""
+run_pipeline_parallel.py (docker_cell_detection)
+
+Author: Samik Banerjee
+Date: May 8, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+
+Parallelized dual-channel cell detection pipeline using ProcessPoolExecutor 
+for high-performance subvolume processing.
+"""
+
 import tifffile
 import numpy as np
 import scipy.ndimage as ndi
