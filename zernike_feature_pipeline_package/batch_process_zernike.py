@@ -7,6 +7,7 @@ import tifffile
 import pandas as pd
 from scipy.spatial.distance import cdist
 
+import argparse
 # Import the Filter Bank class
 from build_zernike_filter_gpu import ZernikeFilterBank
 
@@ -26,28 +27,43 @@ def compute_invariants(moments_dict):
     return invariants
 
 def main():
-    print("========================================")
-    print("   Zernike 3D Batch Feature Extraction  ")
-    print("========================================")
-    start_total = time.time()
-    
-    # 1. Configuration
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    # The full 4GB image sits outside the package folder for storage efficiency
-    base_dir = os.path.dirname(script_dir)
-    tif_path = os.path.join(base_dir, r'docker_cell_detection\F0200_multichannel_cmle_ch04.tif')
     
-    # Internal package relative data paths
-    swc_path = os.path.join(script_dir, 'data', 'centroids_DAPI_scaled.swc')
+    # 1. Argument Parsing
+    parser = argparse.ArgumentParser(description="Zernike 3D Batch Feature Extraction Pipeline (Mitralab @ CSHL)")
+    parser.add_argument("--volume", type=str, default="", help="Path to full 3D TIF volume")
+    parser.add_argument("--centroids", type=str, default="", help="Path to input SWC centroids file")
+    parser.add_argument("--output_prefix", type=str, default="zernike", help="Filename prefix for generated features/neighbors CSV files")
+    args = parser.parse_args()
+    
+    # 2. Configuration & Default Fallbacks
+    tif_path = args.volume
+    if not tif_path:
+        base_dir = os.path.dirname(script_dir)
+        tif_path = os.path.join(base_dir, r'docker_cell_detection\F0200_multichannel_cmle_ch04.tif')
+        
+    swc_path = args.centroids
+    if not swc_path:
+        swc_path = os.path.join(script_dir, 'data', 'centroids_DAPI_scaled.swc')
+        
+    out_features = os.path.join(script_dir, 'data', f"{args.output_prefix}_features.csv")
+    out_neighbors = os.path.join(script_dir, 'data', f"{args.output_prefix}_neighbors.csv")
+    
     optimal_keys_path = os.path.join(script_dir, 'data', 'optimal_basis_keys.json')
     
-    out_features = os.path.join(script_dir, 'data', 'zernike_features_dapi.csv')
-    out_neighbors = os.path.join(script_dir, 'data', 'nearest_neighbors.csv')
+    print("========================================")
+    print("   Zernike 3D Batch Feature Extraction  ")
+    print(f"   Volume: {os.path.basename(tif_path)}")
+    print(f"   Centroids: {os.path.basename(swc_path)}")
+    print(f"   Output Features: {os.path.basename(out_features)}")
+    print("========================================")
+    
+    start_total = time.time()
     
     voxel_spacing = (0.5, 0.1102, 0.1102)
     Z_dim, Y_dim, X_dim = 50, 150, 150
     
-    # 2. Compile Filter Bank
+    # Compile Filter Bank
     filter_bank = ZernikeFilterBank(
         optimal_keys_path, 
         voxel_spacing, 
