@@ -158,6 +158,29 @@ class ProofreaderDockWidget(QWidget):
         self.btn_save.clicked.connect(self.save_edits_dialog)
         self.layout.addWidget(self.btn_save)
         
+        # Spacer
+        self.layout.addWidget(QLabel("<b>Metrics Comparison</b>"))
+        
+        # Load Baseline SWC Button
+        self.btn_load_baseline = QPushButton("Load Baseline SWC (Ground Truth)")
+        self.btn_load_baseline.clicked.connect(self.load_baseline_dialog)
+        self.layout.addWidget(self.btn_load_baseline)
+        
+        # Match Tolerance
+        self.lbl_tolerance = QLabel("Match Tolerance (Physical Units):")
+        self.layout.addWidget(self.lbl_tolerance)
+        self.spin_tolerance = QDoubleSpinBox()
+        self.spin_tolerance.setRange(0.01, 100.0)
+        self.spin_tolerance.setValue(10.0)
+        self.spin_tolerance.setSingleStep(1.0)
+        self.spin_tolerance.valueChanged.connect(self.calculate_metrics)
+        self.layout.addWidget(self.spin_tolerance)
+        
+        # Stats Output text area
+        self.lbl_metrics_stats = QLabel("TP: - | FP: - | FN: -<br>Precision: - | Recall: - | F1: -")
+        self.lbl_metrics_stats.setStyleSheet("border: 1px solid gray; padding: 5px; background-color: #2b2b2b; color: #a9b7c6;")
+        self.layout.addWidget(self.lbl_metrics_stats)
+        
         # Loading Progress Bar
         self.lbl_progress = QLabel("Status: Ready")
         self.layout.addWidget(self.lbl_progress)
@@ -168,6 +191,10 @@ class ProofreaderDockWidget(QWidget):
         
         self.setLayout(self.layout)
         
+        # Baseline coordinates state
+        self.baseline_coords = None
+
+        
     def load_volume_dialog(self):
         filepath, _ = QFileDialog.getOpenFileName(self, "Open Volume TIFF File", "", "TIFF Files (*.tif *.tiff)")
         if filepath:
@@ -177,6 +204,31 @@ class ProofreaderDockWidget(QWidget):
         filepath, _ = QFileDialog.getOpenFileName(self, "Open SWC Centroids File", "", "SWC Files (*.swc)")
         if filepath:
             self.start_loading_thread(filepath, "centroids")
+
+    def load_baseline_dialog(self):
+        filepath, _ = QFileDialog.getOpenFileName(self, "Open Baseline Ground Truth SWC", "", "SWC Files (*.swc)")
+        if filepath:
+            print(f"Loading baseline SWC for comparison: {filepath}")
+            df = read_swc(filepath)
+            if df is not None:
+                self.baseline_coords = np.column_stack((df['z'].values, df['y'].values, df['x'].values))
+                # Add baseline points to viewer for visualization
+                name = "Baseline_Ground_Truth"
+                for layer in list(self.viewer.layers):
+                    if layer.name == name:
+                        self.viewer.layers.remove(layer)
+                self.viewer.add_points(
+                    self.baseline_coords,
+                    name=name,
+                    size=self.spin_marker_size.value() * 1.2,
+                    face_color='transparent',
+                    edge_color='green',
+                    border_color='green',
+                    blending='translucent'
+                )
+                print(f"Loaded baseline with {len(self.baseline_coords)} points.")
+                self.calculate_metrics()
+
 
     def start_loading_thread(self, filepath, file_type):
         self.lbl_progress.setText(f"Loading {file_type}...")
@@ -231,6 +283,70 @@ class ProofreaderDockWidget(QWidget):
         self.lbl_progress.setText("Status: Error during load!")
         print(f"Failed to load file: {err_msg}")
 
+    def calculate_metrics(self, val=None):
+        if self.baseline_coords is None:
+            return
+            
+        # Get current edited coordinates from active or first Points layer
+        centroids_layer = self.viewer.layers.selection.active
+        if not isinstance(centroids_layer, napari.layers.Points):
+            for layer in self.viewer.layers:
+                if isinstance(layer, napari.layers.Points) and layer.name != "Baseline_Ground_Truth":
+                    centroids_layer = layer
+                    break
+        
+        if centroids_layer is None:
+            self.lbl_metrics_stats.setText("TP: - | FP: - | FN: -<br>Precision: - | Recall: - | F1: -")
+            return
+            
+        edited_coords = centroids_layer.data
+        if len(edited_coords) == 0:
+            tp, fp, fn = 0, 0, len(self.baseline_coords)
+            precision, recall, f1 = 0.0, 0.0, 0.0
+            self.lbl_metrics_stats.setText(f"TP: {tp} | FP: {fp} | FN: {fn}<br>Precision: {precision:.4f} | Recall: {recall:.4f} | F1: {f1:.4f}")
+            return
+            
+        # Calculate True Positives, False Positives, False Negatives, and True Negatives
+        # Using KDTree for fast physical coordinates distance matching
+        from scipy.spatial import KDTree
+        tolerance = self.spin_tolerance.value()
+        
+        baseline_tree = KDTree(self.baseline_coords)
+        edited_tree = KDTree(edited_coords)
+        
+        # TP/FN calculation: find matches in edited coords for each baseline point
+        # A baseline point is matched (TP) if there is an edited point within tolerance.
+        matched_baselines = 0
+        for pt in self.baseline_coords:
+            dist, _ = edited_tree.query(pt)
+            if dist <= tolerance:
+                matched_baselines += 1
+                
+        tp = matched_baselines
+        fn = len(self.baseline_coords) - tp
+        
+        # FP calculation: edited points that do not match any baseline point
+        matched_edited = 0
+        for pt in edited_coords:
+            dist, _ = baseline_tree.query(pt)
+            if dist <= tolerance:
+                matched_edited += 1
+        fp = len(edited_coords) - matched_edited
+        
+        # Precision & Recall & F-score
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        f_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+        
+        self.lbl_metrics_stats.setText(
+            f"<b>Metrics (Tol: {tolerance} px):</b><br>"
+            f"TP: {tp} | FP: {fp} | FN: {fn}<br>"
+            f"Precision: {precision:.4f}<br>"
+            f"Recall: {recall:.4f}<br>"
+            f"F-score: {f_score:.4f}"
+        )
+        print(f"Metrics recalculated - TP: {tp}, FP: {fp}, FN: {fn}, Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f_score:.4f}")
+
     def update_voxel_spacing(self, val=None):
         self.progress_bar.setValue(20)
         self.lbl_progress.setText("Status: Updating voxel spacing...")
@@ -268,7 +384,7 @@ class ProofreaderDockWidget(QWidget):
         centroids_layer = self.viewer.layers.selection.active
         if not isinstance(centroids_layer, napari.layers.Points):
             for layer in self.viewer.layers:
-                if isinstance(layer, napari.layers.Points):
+                if isinstance(layer, napari.layers.Points) and layer.name != "Baseline_Ground_Truth":
                     centroids_layer = layer
                     break
         
@@ -293,6 +409,7 @@ class ProofreaderDockWidget(QWidget):
                 self.progress_bar.setValue(100)
                 self.lbl_progress.setText("Status: Edits saved successfully!")
                 print(f"Edits saved to: {filepath}")
+                self.calculate_metrics()
             else:
                 self.progress_bar.setValue(0)
                 self.lbl_progress.setText("Status: Error saving SWC file!")
