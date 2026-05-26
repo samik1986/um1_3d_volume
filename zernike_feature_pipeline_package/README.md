@@ -17,17 +17,27 @@ This standalone package provides a GPU-accelerated 3D shape descriptor extractio
   - `zernike_features_dapi.csv`: Generated output shell invariants.
   - `nearest_neighbors.csv`: Generated morphological similarity twin-mapping file.
 
----
-
 ## 🏃 Running the Pipeline
 
 Ensure you have a Python environment with CUDA-compatible `cupy`, `tifffile`, `pandas`, and `numpy` installed.
 
-Run the batch extraction directly:
+### Standard Execution (Default Datasets)
+Run the batch extraction directly using the default DAPI coordinates and volume:
 ```bash
 python batch_process_zernike.py
 ```
 
-### Output Results
-- Detailed logs will display parallel GPU filter bank compilation and fast descriptor extraction metrics.
-- Output features and neighboring pairs will be written directly inside the `data/` subdirectory.
+### Custom Modular Execution
+You can specify custom input volumes, centroid files, and output prefixes:
+```bash
+python batch_process_zernike.py \
+    --volume /path/to/custom_volume.tif \
+    --centroids /path/to/custom_centroids.swc \
+    --output_prefix custom_dapi
+```
+
+#### ⚙️ Parameters:
+- **`--volume`**: Path to custom 3D TIFF intensity volume (Defaults to `F0200_multichannel_cmle_ch04.tif`).
+- **`--centroids`**: Path to custom SWC coordinates. Supports scaled physical dimensions in microns (Defaults to packaged `centroids_DAPI_scaled.swc`).
+- **`--output_prefix`**: Output file prefix. Saves output tables dynamically to `data/{prefix}_features.csv` and `data/{prefix}_neighbors.csv` (Defaults to `zernike`).
+
