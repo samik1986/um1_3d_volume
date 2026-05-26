@@ -1,0 +1,343 @@
+"""
+napari_proofreader.py
+
+Interactive Napari-based proofreading tool for 3D DAPI volumes and centroids.
+Created by: Samik Banerjee @ Mitralab @ CSHL
+Includes custom UI buttons for loading datasets, adjusting marker sizes, and saving edited SWC centroids.
+"""
+
+import os
+import sys
+import numpy as np
+import pandas as pd
+import tifffile
+import napari
+from magicgui import magicgui
+from qtpy.QtCore import QThread, Signal, QObject
+from qtpy.QtWidgets import QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QDoubleSpinBox, QProgressBar, QApplication
+
+
+
+# Helper to read SWC files
+def read_swc(filepath):
+    """
+    Reads an SWC file and returns a pandas DataFrame.
+    Format: id type x y z r p
+    """
+    if not os.path.exists(filepath):
+        print(f"Error: {filepath} does not exist.")
+        return None
+    try:
+        # Standard SWC uses space as separator and '#' for comments
+        df = pd.read_csv(filepath, sep=' ', comment='#', header=None,
+                         names=['id', 'type', 'x', 'y', 'z', 'r', 'p'])
+        return df
+    except Exception as e:
+        print(f"Error reading SWC: {e}")
+        return None
+
+def save_swc(filepath, coords, marker_size=1.0):
+    """
+    Saves centroids coordinates (in physical units or pixel units, depending on scale) back to SWC.
+    Here coords are in physical units (Z, Y, X) because Napari displays/edits them scaled, 
+    but let's write them matching the original SWC structure.
+    coords: numpy array of shape (N, 3) representing (z, y, x) in physical space.
+    """
+    try:
+        with open(filepath, 'w') as f:
+            f.write("# SWC file edited and saved using Napari Proofreader\n")
+            f.write("# id type x y z radius parent\n")
+            # In SWC, order is x, y, z
+            for idx, pt in enumerate(coords):
+                z_phys, y_phys, x_phys = pt
+                # ID starts at 1, type=1 (soma/centroid), parent=-1
+                f.write(f"{idx+1} 1 {x_phys:.6f} {y_phys:.6f} {z_phys:.6f} {marker_size:.6f} -1\n")
+        print(f"Successfully saved {len(coords)} centroids to {filepath}")
+        return True
+    except Exception as e:
+        print(f"Error saving SWC: {e}")
+        return False
+        
+# Thread worker for reading files in background
+class LoadingWorker(QObject):
+    finished = Signal(object, str, str)  # Emits (data, file_type, name)
+    progress = Signal(int)
+    error = Signal(str)
+
+    def __init__(self, filepath, file_type):
+        super().__init__()
+        self.filepath = filepath
+        self.file_type = file_type
+
+    def run(self):
+        try:
+            self.progress.emit(10)
+            name = os.path.basename(self.filepath)
+            if self.file_type == "volume":
+                self.progress.emit(30)
+                # Load volume chunk/file
+                vol = tifffile.imread(self.filepath)
+                self.progress.emit(80)
+                self.finished.emit(vol, "volume", name)
+            elif self.file_type == "centroids":
+                self.progress.emit(40)
+                df = read_swc(self.filepath)
+                self.progress.emit(80)
+                self.finished.emit(df, "centroids", name)
+            self.progress.emit(100)
+        except Exception as e:
+            self.error.emit(str(e))
+
+
+# Custom widgets and layout for napari panel
+class ProofreaderDockWidget(QWidget):
+    def __init__(self, viewer):
+        super().__init__()
+        self.viewer = viewer
+        self.layout = QVBoxLayout()
+        
+        # Title Label
+        self.title_lbl = QLabel("<b>Proofreading Tools</b><br><font size='2' color='gray'>Samik Banerjee @ Mitralab @ CSHL</font>")
+        self.layout.addWidget(self.title_lbl)
+        
+        # Load Volume Button
+        self.btn_load_vol = QPushButton("Upload Volume (.tif)")
+        self.btn_load_vol.clicked.connect(self.load_volume_dialog)
+        self.layout.addWidget(self.btn_load_vol)
+        
+        # Load Centroids Button
+        self.btn_load_centroids = QPushButton("Upload Centroids (.swc)")
+        self.btn_load_centroids.clicked.connect(self.load_centroids_dialog)
+        self.layout.addWidget(self.btn_load_centroids)
+        
+        # Spacing inputs: X, Y, Z
+        self.lbl_spacing = QLabel("<b>Voxel Spacing (Z, Y, X):</b>")
+        self.layout.addWidget(self.lbl_spacing)
+        
+        self.layout_spacing = QHBoxLayout()
+        
+        self.spin_z = QDoubleSpinBox()
+        self.spin_z.setRange(0.0001, 100.0)
+        self.spin_z.setValue(0.5)
+        self.spin_z.setSingleStep(0.1)
+        self.spin_z.setPrefix("Z: ")
+        self.spin_z.valueChanged.connect(self.update_voxel_spacing)
+        
+        self.spin_y = QDoubleSpinBox()
+        self.spin_y.setRange(0.0001, 100.0)
+        self.spin_y.setValue(0.1102)
+        self.spin_y.setSingleStep(0.01)
+        self.spin_y.setPrefix("Y: ")
+        self.spin_y.valueChanged.connect(self.update_voxel_spacing)
+        
+        self.spin_x = QDoubleSpinBox()
+        self.spin_x.setRange(0.0001, 100.0)
+        self.spin_x.setValue(0.1102)
+        self.spin_x.setSingleStep(0.01)
+        self.spin_x.setPrefix("X: ")
+        self.spin_x.valueChanged.connect(self.update_voxel_spacing)
+        
+        self.layout_spacing.addWidget(self.spin_z)
+        self.layout_spacing.addWidget(self.spin_y)
+        self.layout_spacing.addWidget(self.spin_x)
+        self.layout.addLayout(self.layout_spacing)
+
+        # Marker Size SpinBox/Control
+        self.lbl_marker_size = QLabel("Marker Size (Physical Units):")
+        self.layout.addWidget(self.lbl_marker_size)
+        
+        self.spin_marker_size = QDoubleSpinBox()
+        self.spin_marker_size.setRange(0.01, 100.0)
+        self.spin_marker_size.setSingleStep(0.5)
+        self.spin_marker_size.setValue(5.0)
+        self.spin_marker_size.valueChanged.connect(self.update_marker_size)
+        self.layout.addWidget(self.spin_marker_size)
+        
+        # Save Edits Button
+        self.btn_save = QPushButton("Save Edits")
+        self.btn_save.clicked.connect(self.save_edits_dialog)
+        self.layout.addWidget(self.btn_save)
+        
+        # Loading Progress Bar
+        self.lbl_progress = QLabel("Status: Ready")
+        self.layout.addWidget(self.lbl_progress)
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        self.layout.addWidget(self.progress_bar)
+        
+        self.setLayout(self.layout)
+        
+    def load_volume_dialog(self):
+        filepath, _ = QFileDialog.getOpenFileName(self, "Open Volume TIFF File", "", "TIFF Files (*.tif *.tiff)")
+        if filepath:
+            self.start_loading_thread(filepath, "volume")
+                
+    def load_centroids_dialog(self):
+        filepath, _ = QFileDialog.getOpenFileName(self, "Open SWC Centroids File", "", "SWC Files (*.swc)")
+        if filepath:
+            self.start_loading_thread(filepath, "centroids")
+
+    def start_loading_thread(self, filepath, file_type):
+        self.lbl_progress.setText(f"Loading {file_type}...")
+        self.progress_bar.setValue(0)
+        self.btn_load_vol.setEnabled(False)
+        self.btn_load_centroids.setEnabled(False)
+        
+        self.thread = QThread()
+        self.worker = LoadingWorker(filepath, file_type)
+        self.worker.moveToThread(self.thread)
+        
+        self.thread.started.connect(self.worker.run)
+        self.worker.progress.connect(self.progress_bar.setValue)
+        self.worker.finished.connect(self.on_loading_finished)
+        self.worker.error.connect(self.on_loading_error)
+        
+        # Cleanup
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        
+        self.thread.start()
+
+    def on_loading_finished(self, data, file_type, name):
+        self.btn_load_vol.setEnabled(True)
+        self.btn_load_centroids.setEnabled(True)
+        self.progress_bar.setValue(100)
+        self.lbl_progress.setText("Status: Load finished!")
+        
+        if file_type == "volume":
+            scale = (self.spin_z.value(), self.spin_y.value(), self.spin_x.value())
+            self.viewer.add_image(data, name=name, scale=scale, blending='additive', colormap='gray')
+            print(f"Volume loaded successfully as a new layer: {name}")
+        elif file_type == "centroids":
+            if data is not None:
+                coords_phys = np.column_stack((data['z'].values, data['y'].values, data['x'].values))
+                size_val = self.spin_marker_size.value()
+                self.viewer.add_points(
+                    coords_phys,
+                    name=name,
+                    size=size_val,
+                    face_color='red',
+                    border_color='white',
+                    blending='translucent'
+                )
+                print(f"Loaded {len(coords_phys)} centroids into new layer: {name}")
+
+    def on_loading_error(self, err_msg):
+        self.btn_load_vol.setEnabled(True)
+        self.btn_load_centroids.setEnabled(True)
+        self.progress_bar.setValue(0)
+        self.lbl_progress.setText("Status: Error during load!")
+        print(f"Failed to load file: {err_msg}")
+
+    def update_voxel_spacing(self, val=None):
+        self.progress_bar.setValue(20)
+        self.lbl_progress.setText("Status: Updating voxel spacing...")
+        
+        scale = (self.spin_z.value(), self.spin_y.value(), self.spin_x.value())
+        active_layer = self.viewer.layers.selection.active
+        
+        self.progress_bar.setValue(50)
+        if isinstance(active_layer, napari.layers.Image):
+            active_layer.scale = scale
+            print(f"Dynamically updated spacing of active layer '{active_layer.name}' to {scale}")
+        else:
+            for layer in self.viewer.layers:
+                if isinstance(layer, napari.layers.Image):
+                    layer.scale = scale
+            print(f"Updated spacing of all loaded Image layers to {scale}")
+            
+        self.progress_bar.setValue(100)
+        self.lbl_progress.setText(f"Status: Spacing updated to {scale}")
+
+    def update_marker_size(self, val):
+        self.progress_bar.setValue(20)
+        self.lbl_progress.setText("Status: Updating marker size...")
+        
+        self.progress_bar.setValue(60)
+        for layer in self.viewer.layers:
+            if isinstance(layer, napari.layers.Points):
+                layer.size = val
+        print(f"Updated marker size to {val} for all points layers")
+        
+        self.progress_bar.setValue(100)
+        self.lbl_progress.setText(f"Status: Marker size updated to {val}")
+
+    def save_edits_dialog(self):
+        centroids_layer = self.viewer.layers.selection.active
+        if not isinstance(centroids_layer, napari.layers.Points):
+            for layer in self.viewer.layers:
+                if isinstance(layer, napari.layers.Points):
+                    centroids_layer = layer
+                    break
+        
+        if centroids_layer is None:
+            self.lbl_progress.setText("Status: Save error (No points layer)")
+            self.progress_bar.setValue(0)
+            print("Error: No Points layer found to save.")
+            return
+            
+        filepath, _ = QFileDialog.getSaveFileName(self, "Save SWC Centroids As...", "centroids_DAPI_scaled_edited.swc", "SWC Files (*.swc)")
+        if filepath:
+            self.progress_bar.setValue(20)
+            self.lbl_progress.setText("Status: Saving SWC edits...")
+            
+            coords = centroids_layer.data
+            size_val = self.spin_marker_size.value()
+            
+            self.progress_bar.setValue(60)
+            success = save_swc(filepath, coords, marker_size=size_val)
+            
+            if success:
+                self.progress_bar.setValue(100)
+                self.lbl_progress.setText("Status: Edits saved successfully!")
+                print(f"Edits saved to: {filepath}")
+            else:
+                self.progress_bar.setValue(0)
+                self.lbl_progress.setText("Status: Error saving SWC file!")
+
+def main():
+    # Setup paths
+    workspace_root = r"c:\Users\banerjee\Desktop\um1_3d_volume"
+    default_vol_path = os.path.join(workspace_root, "docker_cell_detection", "F0200_multichannel_cmle_ch04.tif")
+    default_swc_path = os.path.join(workspace_root, "docker_cell_detection", "centroids_DAPI_scaled.swc")
+    
+    print("Initializing Napari viewer...")
+    viewer = napari.Viewer()
+    
+    # Instantiate dock widget
+    widget = ProofreaderDockWidget(viewer)
+    viewer.window.add_dock_widget(widget, name="Centroid Proofreader", area="right")
+    
+    # Auto-load default volume if it exists
+    if os.path.exists(default_vol_path):
+        print(f"Auto-loading default volume: {default_vol_path}")
+        try:
+            vol = tifffile.imread(default_vol_path)
+            scale = (0.5, 0.1102, 0.1102)
+            viewer.add_image(vol, name=os.path.basename(default_vol_path), scale=scale, blending='additive', colormap='gray')
+        except Exception as e:
+            print(f"Failed to auto-load volume: {e}")
+            
+    # Auto-load default centroids if they exist
+    if os.path.exists(default_swc_path):
+        print(f"Auto-loading default centroids: {default_swc_path}")
+        df = read_swc(default_swc_path)
+        if df is not None:
+            coords_phys = np.column_stack((df['z'].values, df['y'].values, df['x'].values))
+            viewer.add_points(
+                coords_phys,
+                name="Centroids",
+                size=5.0,
+                face_color='red',
+                border_color='white',
+                blending='translucent'
+            )
+            
+    # Run Napari
+    print("Launching Napari...")
+    napari.run()
+
+if __name__ == '__main__':
+    main()
