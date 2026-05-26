@@ -8,27 +8,38 @@ This standalone package provides a GPU-accelerated 3D shape descriptor extractio
 
 ## 📦 Package Structure
 
-- **`batch_process_zernike.py`**: Entry script. Resolves paths relatively, loads datasets, runs extraction, and computes nearest-neighbor twins.
-- **`build_zernike_filter_gpu.py`**: GPU filter bank compiler. Leverages CuPy to compile hundreds of Zernike basis functions in parallel.
-- **`zernike_basis_gpu.py`**: Low-level CUDA/GPU mathematical implementations of radial and spherical Zernike harmonics.
+- **`launcher.py`**: Self-contained dependency bootstrapper that auto-installs missing packages (`numpy`, `pandas`, `scipy`, `tifffile`, `cupy`) on execution.
+- **`run_pipeline.bat`**: Double-click execution batch script for Windows. Safely detects missing Python environments and directs the user to the installation portal.
+- **`run_pipeline.sh`**: Double-click execution shell script for macOS and Linux environments.
 - **`data/`**: Subfolder containing packaged input data:
   - `centroids_DAPI_scaled.swc`: Packaged physical DAPI centroid coordinates (633 cells).
   - `optimal_basis_keys.json`: 408 custom optimal filter keys representing 54 energy shells.
   - `zernike_features_dapi.csv`: Generated output shell invariants.
   - `nearest_neighbors.csv`: Generated morphological similarity twin-mapping file.
 
+---
+
 ## 🏃 Running the Pipeline
 
-Ensure you have a Python environment with CUDA-compatible `cupy`, `tifffile`, `pandas`, and `numpy` installed.
+The pipeline is pre-configured with **one-click auto-installers** that dynamically verify your Python environment, boot-strap `pip`, and automatically install all needed CUDA-accelerated mathematical libraries before running extraction.
 
-### Standard Execution (Default Datasets)
-Run the batch extraction directly using the default DAPI coordinates and volume:
+### Windows (Double-Click Execution)
+Simply double-click the Windows batch runner:
 ```bash
-python batch_process_zernike.py
+run_pipeline.bat
 ```
 
-### Custom Modular Execution
-You can specify custom input volumes, centroid files, and output prefixes:
+### macOS / Linux (Terminal Launch)
+Open a terminal in the folder directory and run:
+```bash
+./run_pipeline.sh
+```
+
+---
+
+## ⚙️ Custom Modular Parameters
+
+You can also pass custom inputs directly through the launchers or manual script execution:
 ```bash
 python batch_process_zernike.py \
     --volume /path/to/custom_volume.tif \
@@ -36,8 +47,7 @@ python batch_process_zernike.py \
     --output_prefix custom_dapi
 ```
 
-#### ⚙️ Parameters:
+#### CLI Parameters:
 - **`--volume`**: Path to custom 3D TIFF intensity volume (Defaults to `F0200_multichannel_cmle_ch04.tif`).
 - **`--centroids`**: Path to custom SWC coordinates. Supports scaled physical dimensions in microns (Defaults to packaged `centroids_DAPI_scaled.swc`).
 - **`--output_prefix`**: Output file prefix. Saves output tables dynamically to `data/{prefix}_features.csv` and `data/{prefix}_neighbors.csv` (Defaults to `zernike`).
-
