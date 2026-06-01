@@ -45,6 +45,25 @@ Open a terminal inside this directory and execute the shell script:
 
 ---
 
+## 🎯 How to Add Points & Snap to the Nearest Cell
+
+To add a centroid point so that it perfectly catches and snaps to the nearest cell, follow this high-precision workflow:
+
+1. **Select the Points Layer**:
+   - In the Napari layer list on the left side of the window, click on the **Centroids** layer (or **Cell Centroids** layer in the standalone viewer) to make it active.
+2. **Activate the Add Points Tool**:
+   - Click the **Add points** icon in the layer controls panel (a circle icon with a `+` symbol in the top-left area), or simply press the shortcut key **`2`** on your keyboard.
+3. **Click Near the Target Cell**:
+   - Scroll the Z-slider to a slice where the target cell is visible.
+   - Click **anywhere inside or close to the target cell boundaries**. You do *not* have to click exactly on the center pixel, nor do you have to find the single brightest Z-slice yourself.
+4. **Snapping Engine Execution**:
+   - **3D Peak Snapping**: The tool immediately scans a tight 3D box of size `(13, 25, 25)` voxels around your click, extracts the local peak intensity, and snaps the marker's coordinate to the true physical center of the cell.
+   - **Auto-slice Focusing**: The Napari dimensions slider automatically scrolls to jump directly to the snapped $Z$ slice so you can instantly verify the alignment.
+   - **Yellow Highlight**: Your newly added point will immediately render in **yellow** for visual distinction.
+   - **Smart Duplicate Removal**: If there was already a marker on a nearby slice for this cell structure, the tool will automatically delete it to keep your datasets perfectly clean with one centroid per cell!
+
+---
+
 ## 📝 Centroid Editing Workflow
 
 1. Click **Upload Volume (.tif)** to import your 3D cell volume.
