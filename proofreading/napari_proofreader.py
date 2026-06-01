@@ -194,6 +194,145 @@ class ProofreaderDockWidget(QWidget):
         # Baseline coordinates state
         self.baseline_coords = None
 
+        # Connect to layers events to automatically bind events on any points layers
+        self.viewer.layers.events.inserted.connect(self._on_layer_inserted)
+        
+        # Connect already existing points layers
+        for layer in self.viewer.layers:
+            if isinstance(layer, napari.layers.Points):
+                self.connect_points_layer(layer)
+
+    def _on_layer_inserted(self, event):
+        layer = event.value
+        if isinstance(layer, napari.layers.Points):
+            self.connect_points_layer(layer)
+
+    def connect_points_layer(self, layer):
+        if not isinstance(layer, napari.layers.Points):
+            return
+        if hasattr(layer, '_proofreader_connected') and layer._proofreader_connected:
+            return
+        layer._proofreader_connected = True
+        
+        # Make the color of newly added points different (yellow)
+        layer.current_face_color = 'yellow'
+        
+        # Show the points in the 2D Z as they appear on all Z slices, even when out of focus
+        layer.out_of_slice_display = True
+        
+        # Keep track of previous data to detect additions
+        layer._prev_data = np.copy(layer.data)
+        layer._updating_points = False
+        
+        def on_data_changed(event):
+            if layer._updating_points:
+                return
+                
+            current_data = layer.data
+            prev_data = getattr(layer, '_prev_data', np.empty((0, 3)))
+            
+            # If points were added
+            if len(current_data) > len(prev_data):
+                # Find the image layer to perform snapping
+                image_layer = None
+                for l in self.viewer.layers:
+                    if isinstance(l, napari.layers.Image):
+                        image_layer = l
+                        break
+                        
+                if image_layer is not None:
+                    image_data = image_layer.data
+                    scale = image_layer.scale if image_layer.scale is not None else (1.0, 1.0, 1.0)
+                    
+                    if len(image_data.shape) == 3:
+                        depth, height, width = image_data.shape
+                        scale_z, scale_y, scale_x = scale
+                        
+                        # Process the newly added point
+                        idx = len(current_data) - 1
+                        z_phys, y_phys, x_phys = current_data[idx]
+                        
+                        # Convert to pixel coords
+                        z_pixel = np.clip(int(round(z_phys / scale_z)), 0, depth - 1)
+                        y_pixel = np.clip(int(round(y_phys / scale_y)), 0, height - 1)
+                        x_pixel = np.clip(int(round(x_phys / scale_x)), 0, width - 1)
+                        
+                        # Search in a 3D neighborhood around (z_pixel, y_pixel, x_pixel)
+                        # Define half-radii for search window
+                        r_z, r_y, r_x = 6, 12, 12
+                        
+                        z_start = max(0, z_pixel - r_z)
+                        z_end = min(depth, z_pixel + r_z + 1)
+                        y_start = max(0, y_pixel - r_y)
+                        y_end = min(height, y_pixel + r_y + 1)
+                        x_start = max(0, x_pixel - r_x)
+                        x_end = min(width, x_pixel + r_x + 1)
+                        
+                        # Extract 3D subvolume crop
+                        crop = image_data[z_start:z_end, y_start:y_end, x_start:x_end]
+                        
+                        # Find index of max intensity within the crop
+                        flat_max_idx = np.argmax(crop)
+                        z_max_local, y_max_local, x_max_local = np.unravel_index(flat_max_idx, crop.shape)
+                        
+                        # Map back to global voxel coordinates
+                        z_max = z_start + z_max_local
+                        y_max = y_start + y_max_local
+                        x_max = x_start + x_max_local
+                        
+                        # Convert back to physical coordinates
+                        z_phys_snapped = z_max * scale_z
+                        y_phys_snapped = y_max * scale_y
+                        x_phys_snapped = x_max * scale_x
+                        
+                        print(f"Snapped added point from ({z_phys:.2f}, {y_phys:.2f}, {x_phys:.2f}) "
+                              f"to local peak ({z_phys_snapped:.2f}, {y_phys_snapped:.2f}, {x_phys_snapped:.2f}) "
+                              f"voxel: ({z_max}, {y_max}, {x_max})")
+                        
+                        # --- REMOVE DUPLICATE POINTS ON NEARBY Z FOR THE SAME CELL ---
+                        indices_to_keep = []
+                        for i in range(len(prev_data)):
+                            z_exist, y_exist, x_exist = prev_data[i]
+                            # Calculate distance in voxels using scale spacing
+                            dz = abs(z_exist - z_phys_snapped) / scale_z
+                            dy = abs(y_exist - y_phys_snapped) / scale_y
+                            dx = abs(x_exist - x_phys_snapped) / scale_x
+                            
+                            # If existing point is within cell radius, mark for removal
+                            if dz <= 10 and dy <= 20 and dx <= 20:
+                                print(f"Removing duplicate centroid on nearby Z/slice for the same cell structure: ({z_exist:.2f}, {y_exist:.2f}, {x_exist:.2f})")
+                                continue
+                            indices_to_keep.append(i)
+                            
+                        # Reconstruct coordinates array
+                        kept_coords = prev_data[indices_to_keep]
+                        new_coords = np.vstack([kept_coords, [z_phys_snapped, y_phys_snapped, x_phys_snapped]])
+                        
+                        # Apply updated coordinates
+                        layer._updating_points = True
+                        layer.data = new_coords
+                        
+                        # Reconstruct and apply color array
+                        try:
+                            old_colors = np.copy(layer.face_color)
+                            kept_colors = old_colors[indices_to_keep]
+                            new_colors = np.vstack([kept_colors, [1.0, 1.0, 0.0, 1.0]]) # Yellow color
+                            layer.face_color = new_colors
+                        except Exception as color_err:
+                            print(f"Error slicing colors: {color_err}")
+                            
+                        layer._updating_points = False
+                        
+                        # Automatically update viewer dims slider to the snapped Z slice index so it is visible
+                        try:
+                            self.viewer.dims.set_current_step(0, int(z_max))
+                        except Exception as dims_err:
+                            print(f"Error updating viewer dims: {dims_err}")
+            
+            layer._prev_data = np.copy(layer.data)
+            self.calculate_metrics()
+            
+        layer.events.data.connect(on_data_changed)
         
     def load_volume_dialog(self):
         filepath, _ = QFileDialog.getOpenFileName(self, "Open Volume TIFF File", "", "TIFF Files (*.tif *.tiff)")
@@ -417,8 +556,8 @@ class ProofreaderDockWidget(QWidget):
 def main():
     # Setup paths
     workspace_root = r"c:\Users\banerjee\Desktop\um1_3d_volume"
-    default_vol_path = os.path.join(workspace_root, "docker_cell_detection", "F0200_multichannel_cmle_ch04.tif")
-    default_swc_path = os.path.join(workspace_root, "docker_cell_detection", "centroids_DAPI_scaled.swc")
+    default_vol_path = os.path.join(workspace_root, "docker_cell_detection", "F0200_multichannel_cmle_ch03.tif")
+    default_swc_path = os.path.join(workspace_root, "docker_cell_detection", "centroids_FP_scaled.swc")
     
     print("Initializing Napari viewer...")
     viewer = napari.Viewer()

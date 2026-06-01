@@ -33,21 +33,49 @@ def compute_invariants(moments_dict):
     return invariants
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Zernike Feature Pipeline: Feature Extraction, Clustering & Napari Visualizer")
+    parser.add_argument("--volume", "-v", type=str, default=r'c:\Users\banerjee\Desktop\um1_3d_volume\docker_cell_detection\F0200_multichannel_cmle_ch03.tif',
+                        help="Path to the input TIFF volume")
+    parser.add_argument("--centroids", "-c", type=str, default=r'c:\Users\banerjee\Desktop\um1_3d_volume\docker_cell_detection\centroids_DAPI_scaled.swc',
+                        help="Path to the centroids SWC file")
+    parser.add_argument("--n_clusters", "-k", type=int, default=10,
+                        help="Number of clusters for K-Means")
+    parser.add_argument("--sphere_multiplier", "-s", type=float, default=2.0,
+                        help="Size scaling factor for the enclosing bounding sphere")
+    parser.add_argument("--crop_size", type=str, default="50,150,150",
+                        help="Comma-separated bounding box crop dimensions (Z,Y,X)")
+    parser.add_argument("--out_features", type=str, default=None,
+                        help="Path to save the output invariants CSV file")
+    
+    parser.add_argument("--point_size", type=float, default=5.0,
+                        help="Point size for Napari visualization markers")
+    
+    args = parser.parse_args()
+    
     print("==================================================")
-    print("   Zernike ch03 Extraction & K=2 Clustering       ")
+    print("   Zernike Feature Pipeline: Extraction & Clustering ")
     print("   Created by: Samik Banerjee @ Mitralab @ CSHL  ")
     print("==================================================")
     
     # 1. Setup paths
     base_dir = r'c:\Users\banerjee\Desktop\um1_3d_volume'
-    tif_path = os.path.join(base_dir, r'docker_cell_detection\F0200_multichannel_cmle_ch03.tif')
-    swc_path = os.path.join(base_dir, r'docker_cell_detection\centroids_DAPI_scaled.swc')
+    tif_path = args.volume
+    swc_path = args.centroids
     optimal_keys_path = os.path.join(base_dir, r'neuron_processing\output\custom_crops\optimal_basis_keys.json')
     
-    out_features = os.path.join(base_dir, r'neuron_processing\output\custom_crops\zernike_features_ch03.csv')
+    if args.out_features:
+        out_features = args.out_features
+    else:
+        vol_basename = os.path.splitext(os.path.basename(tif_path))[0]
+        out_features = os.path.join(base_dir, f'neuron_processing\\output\\custom_crops\\zernike_features_{vol_basename}.csv')
     
     voxel_spacing = (0.5, 0.1102, 0.1102)
-    Z_dim, Y_dim, X_dim = 50, 150, 150
+    try:
+        Z_dim, Y_dim, X_dim = map(int, args.crop_size.split(','))
+    except Exception:
+        print("Invalid crop_size format. Using default 50,150,150")
+        Z_dim, Y_dim, X_dim = 50, 150, 150
     
     # 2. Compile Filter Bank
     filter_bank = ZernikeFilterBank(
@@ -55,11 +83,12 @@ def main():
         voxel_spacing, 
         z_dim=Z_dim, 
         y_dim=Y_dim, 
-        x_dim=X_dim
+        x_dim=X_dim,
+        sphere_multiplier=args.sphere_multiplier
     )
     
     # 3. Load full 4GB image
-    print(f"\nLoading ch03 volume: {tif_path}")
+    print(f"\nLoading volume: {tif_path}")
     vol = tifffile.imread(tif_path)
     max_z, max_y, max_x = vol.shape
     
@@ -69,7 +98,7 @@ def main():
                                names=['id', 'type', 'x', 'y', 'z', 'r', 'p'])
     
     num_cells = len(df_centroids)
-    print(f"Found {num_cells} cells. Extracting features on ch03...")
+    print(f"Found {num_cells} cells. Extracting features...")
     
     features_list = []
     coords_phys = []
@@ -113,7 +142,11 @@ def main():
         if z_e_vol > z_s_vol and y_e_vol > y_s_vol and x_e_vol > x_s_vol:
             crop[z_s_crop:z_e_crop, y_s_crop:y_e_crop, x_s_crop:x_e_crop] = vol[z_s_vol:z_e_vol, y_s_vol:y_e_vol, x_s_vol:x_e_vol]
             
-        moments, _ = filter_bank.extract(crop)
+        # Perform 3D histogram equalization to normalize intensities across cells
+        from skimage.exposure import equalize_hist
+        crop_equalized = equalize_hist(crop).astype(np.float32)
+            
+        moments, _ = filter_bank.extract(crop_equalized)
         inv = compute_invariants(moments)
         inv['cell_id'] = c_id
         features_list.append(inv)
@@ -127,8 +160,9 @@ def main():
     df_features.to_csv(out_features, index=False)
     print(f"Features saved to {out_features}")
     
-    # 5. K-Means clustering (K=2)
-    print("\nPerforming K-Means Clustering (K=2) on shell invariants...")
+    # 5. K-Means clustering
+    k_clusters = args.n_clusters
+    print(f"\nPerforming K-Means Clustering (K={k_clusters}) on shell invariants...")
     feature_cols = [c for c in df_features.columns if c.startswith('F_')]
     X = df_features[feature_cols].values
     
@@ -136,19 +170,27 @@ def main():
     from sklearn.preprocessing import StandardScaler
     X_scaled = StandardScaler().fit_transform(X)
     
-    kmeans = KMeans(n_clusters=2, random_state=42, n_init=10)
+    kmeans = KMeans(n_clusters=k_clusters, random_state=42, n_init=10)
     cluster_labels = kmeans.fit_predict(X_scaled)
     
     df_centroids['cluster'] = cluster_labels
     coords_phys = np.array(coords_phys)
     
-    # Separate clusters
-    cluster_0_coords = coords_phys[cluster_labels == 0]
-    cluster_1_coords = coords_phys[cluster_labels == 1]
+    # Define color list for visualization
+    base_colors = [
+        'red', 'green', 'blue', 'yellow', 'magenta', 
+        'cyan', 'orange', 'pink', 'purple', 'white',
+        'lightgreen', 'darkred', 'violet', 'gold', 'teal'
+    ]
+    colors = [base_colors[i % len(base_colors)] for i in range(k_clusters)]
     
-    print(f"Cluster 0: {len(cluster_0_coords)} cells (Red)")
-    print(f"Cluster 1: {len(cluster_1_coords)} cells (Blue)")
-    
+    print("\nCluster assignment breakdown:")
+    cluster_coords_dict = {}
+    for k in range(k_clusters):
+        coords_k = coords_phys[cluster_labels == k]
+        cluster_coords_dict[k] = coords_k
+        print(f"  Cluster {k}: {len(coords_k)} cells ({colors[k].capitalize()})")
+        
     # 6. Napari Visualization
     print("\nLaunching Napari Viewer...")
     viewer = napari.Viewer()
@@ -156,31 +198,22 @@ def main():
     # Display volume
     viewer.add_image(
         vol, 
-        name='Volume ch03', 
+        name='Volume', 
         scale=voxel_spacing, 
         blending='additive', 
         colormap='gray'
     )
     
-    # Display Cluster 0 in Red
-    viewer.add_points(
-        cluster_0_coords,
-        name='Cluster 0 (Red)',
-        size=10.0,
-        face_color='red',
-        border_color='white',
-        blending='translucent'
-    )
-    
-    # Display Cluster 1 in Blue
-    viewer.add_points(
-        cluster_1_coords,
-        name='Cluster 1 (Blue)',
-        size=10.0,
-        face_color='blue',
-        border_color='white',
-        blending='translucent'
-    )
+    # Dynamically display each cluster as a separate point layer
+    for k in range(k_clusters):
+        viewer.add_points(
+            cluster_coords_dict[k],
+            name=f'Cluster {k} ({colors[k].capitalize()})',
+            size=args.point_size,
+            face_color=colors[k],
+            border_color='white',
+            blending='translucent'
+        )
     
     napari.run()
 
