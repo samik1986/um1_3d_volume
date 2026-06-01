@@ -22,7 +22,7 @@ Interactive, cross-platform graphical tool built on Napari to visualize 3D cell 
 - **3D Local Neighborhood Peak Snapping**: Click anywhere near a cell structure to place a centroid, and the tool will automatically search a 3D window of size `(13, 25, 25)` voxels ($\pm 6$ Z-slices, $\pm 12$ Y/X pixels) and snap coordinates exactly to the absolute local peak intensity center in physical space.
 - **Synchronized View Focus Tracking**: When a point is added and snapped, the Napari dims slider automatically scrolls to the snapped Z-depth slice so you can instantly verify the alignment without manual searching.
 - **Dynamic Duplicate Centroid Cleanup**: Placing a point near a cell structure automatically scans, identifies, and removes any existing centroid on neighboring Z-slices for the same cell, maintaining exactly one clean marker per cell structure.
-- **Global Multi-Z Visibility (Out-of-Slice Rendering)**: Out-of-focus centroids display as smaller translucent circles on neighboring slices. You can view all cell layers simultaneously in 2D slicing mode without markers disappearing as you navigate.
+- **Global Multi-Z Visibility (Out-of-Slice Rendering)**: Centroids are rendered across all Z-slices simultaneously. Points from neighboring slices display as smaller translucent circles, ensuring comprehensive spatial contextualization even when out-of-focus.
 - **High-Contrast Color Indicators**: Newly added or adjusted centroids appear in bright **yellow**, distinct from the original preloaded centroids in **red**, providing immediate visual feedback of edits.
 
 ---
@@ -42,6 +42,17 @@ Open a terminal inside this directory and execute the shell script:
 ```bash
 ./run_proofreader.sh
 ```
+
+---
+
+## 👁️ How Cells Are Shown Across Z (Depth Cueing)
+
+Centroids are displayed across Z-slices using a highly intuitive depth-cueing feature called **Out-of-Slice Rendering** (`out_of_slice_display = True`). 
+
+As you navigate the 3D volume stack:
+- **In-Focus Cells (Current Slice)**: Centroids located on or very close to your currently active Z-slice render at their **full size** with **full opacity** (solid bright color).
+- **Out-of-Focus Cells (Other Slices)**: Centroids located above or below your current view are not hidden! Instead, they render dynamically **smaller** and **semi-transparent (translucent)**. The further they are from your active slice, the more they shrink and fade.
+- **Depth-Cueing Animation**: Scrolling the Z-slider creates a smooth transition—markers grow larger and brighter as they come into focus, and shrink/fade as you scroll away, acting as a natural Z-navigation guide.
 
 ---
 
