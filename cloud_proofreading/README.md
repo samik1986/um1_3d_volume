@@ -44,7 +44,8 @@ Before your first deployment, you must configure the environment variables so th
 2. Set the `SERVER_IP` to your machine's public IP address. (Caddy uses this to magically generate a free, valid Let's Encrypt SSL certificate via `nip.io`).
 3. Generate an OAuth 2.0 Web Application credential in the **Google Cloud Console**.
 4. Set the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in the `.env` file. (Make sure your Authorized Redirect URI in Google matches the `SERVER_IP.nip.io` domain).
-5. Set the `DATA_DIR` in the `.env` file to point to the local folder on your VM where the TIFFs and JSONs are stored.
+5. Set `TOOL_MODE` to `neurite` (for the topological CW Complex editor) or `centroids` (for the Cell Centroid proofreader).
+6. Set the `DATA_DIR` in the `.env` file to point to the local folder on your VM where the TIFFs and JSONs are stored.
 
 Once the `.env` is configured, running the 1-click deployment script will bring the secure website online!
 

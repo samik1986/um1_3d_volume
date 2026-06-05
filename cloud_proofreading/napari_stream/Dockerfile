@@ -27,6 +27,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt \
 
 # Copy the application code
 COPY neurite_detection /app/neurite_detection
+COPY proofreading /app/proofreading
 
 # Copy the entrypoint script
 COPY cloud_proofreading/napari_stream/entrypoint.sh /app/entrypoint.sh
