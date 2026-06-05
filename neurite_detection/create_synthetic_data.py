@@ -1,3 +1,10 @@
+"""
+create_synthetic_data.py (neurite_detection)
+
+Author: Samik Banerjee
+Date: June 5, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+"""
 import os
 import json
 import tifffile

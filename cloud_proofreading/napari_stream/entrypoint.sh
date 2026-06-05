@@ -1,4 +1,9 @@
 #!/bin/bash
+# entrypoint.sh (napari_stream)
+# 
+# Author: Samik Banerjee
+# Date: June 5, 2026
+# GitHub: https://github.com/samik1986/um1_3d_volume
 set -e
 
 # Set environment variables for virtual display

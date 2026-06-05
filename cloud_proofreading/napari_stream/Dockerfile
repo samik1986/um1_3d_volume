@@ -1,3 +1,8 @@
+# Dockerfile (napari_stream)
+# 
+# Author: Samik Banerjee
+# Date: June 5, 2026
+# GitHub: https://github.com/samik1986/um1_3d_volume
 # Base image with NVIDIA CUDA and OpenGL support
 FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04
 
