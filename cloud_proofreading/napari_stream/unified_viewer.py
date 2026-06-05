@@ -1,3 +1,14 @@
+"""
+unified_viewer.py (cloud_proofreading)
+
+Author: Samik Banerjee
+Date: June 5, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+DockerHub: https://hub.docker.com/r/samik1986/napari-cloud
+
+A unified standalone and cloud-ready 3D proofreading viewer for Napari.
+"""
+
 import os
 import sys
 import json
@@ -200,6 +211,32 @@ def run_viewer(raw_path, skeletons_path, centroids_path):
                 colors = color_connected_components(paths)
                 viewer.add_shapes(paths, shape_type='path', edge_color=colors, edge_width=2, name='Skeletons (Edges)', scale=voxel_scale)
 
+    # --- ABOUT DOCK WIDGET ---
+    from qtpy.QtWidgets import QWidget, QVBoxLayout, QLabel
+    from qtpy.QtCore import Qt
+    
+    about_widget = QWidget()
+    about_layout = QVBoxLayout()
+    
+    about_text = QLabel(
+        "<h3>Unified Proofreading Viewer</h3>"
+        "<p><b>Author:</b> Samik Banerjee</p>"
+        "<p><b>Date:</b> June 5, 2026</p>"
+        "<p><b>Institution:</b> Cold Spring Harbor Laboratory (CSHL)</p>"
+        "<br>"
+        "<b>Need Help?</b><br>"
+        "Load files via CLI or UI.<br>"
+        "Draw paths/nodes, then press <b>'S'</b> to save.<br>"
+        "Lines automatically snap to medial axis.<br><br>"
+        "<b>Links:</b><br>"
+        "<a href='https://github.com/samik1986/um1_3d_volume'>GitHub Repository</a><br>"
+        "<a href='https://hub.docker.com/r/samik1986/napari-cloud'>DockerHub Images</a>"
+    )
+    about_text.setOpenExternalLinks(True)
+    about_text.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+    about_layout.addWidget(about_text)
+    
+    about_widget.setLayout(about_layout)
     # --- LOAD CENTROIDS ---
     cw_cent_data = None
     if centroids_path and os.path.exists(centroids_path):
@@ -220,6 +257,8 @@ def run_viewer(raw_path, skeletons_path, centroids_path):
             nodes = [n['coord'] for n in cw_cent_data.get('cells_0_nodes', [])]
             if nodes:
                 viewer.add_points(np.array(nodes), name='Centroids', size=8, face_color='yellow', scale=voxel_scale)
+
+    viewer.window.add_dock_widget(about_widget, name='About & Help', area='right')
 
     # --- INSTRUCTIONS OVERLAY ---
     viewer.text_overlay.visible = True
