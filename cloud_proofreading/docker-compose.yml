@@ -16,12 +16,9 @@ services:
               count: all
               capabilities: [gpu, compute, utility, graphics, display]
     environment:
-      # Use TOOL_MODE=centroids to launch the Cell Centroids Proofreading tool instead
-      - TOOL_MODE=${TOOL_MODE:-neurite}
       - INPUT_RAW=${INPUT_RAW:-}
-      - INPUT_CW=${INPUT_CW:-}
-      - INPUT_MASK=${INPUT_MASK:-}
-      - INPUT_SOMAS=${INPUT_SOMAS:-}
+      - INPUT_SKELETONS=${INPUT_SKELETONS:-}
+      - INPUT_CENTROIDS=${INPUT_CENTROIDS:-}
     volumes:
       - ${DATA_DIR:-./data}:/data
     expose:

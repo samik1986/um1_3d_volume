@@ -23,11 +23,12 @@ WORKDIR /app
 # We install standard requirements plus specific Qt bindings for headless GUI
 COPY neurite_detection/requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt \
-    && pip3 install --no-cache-dir pyqt5
+    && pip3 install --no-cache-dir pyqt5 scipy networkx
 
 # Copy the application code
 COPY neurite_detection /app/neurite_detection
 COPY proofreading /app/proofreading
+COPY cloud_proofreading/napari_stream/unified_viewer.py /app/unified_viewer.py
 
 # Copy the entrypoint script
 COPY cloud_proofreading/napari_stream/entrypoint.sh /app/entrypoint.sh

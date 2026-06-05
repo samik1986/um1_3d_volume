@@ -2,7 +2,7 @@
 
 Welcome to the Cloud Proofreading Interface! This document explains how to securely log into the cloud server and use the interactive tools to validate machine-generated biological structures.
 
-Depending on how your administrator has configured the server, you will be presented with one of two tools: the **Neurite Network Editor** or the **Cell Centroid Editor**.
+The server now runs a **Unified Viewer** that allows you to simultaneously load, visualize, and edit both **Cell Centroids** and **Neurite Skeletons** in the same workspace. You can provide these structures in either `.swc` or `.json` (CW Complex) formats!
 
 ## 🎓 Interactive Video & Tutorial
 
@@ -40,62 +40,23 @@ This portal is designed to let you perform heavy 3D rendering and structural edi
 
 ---
 
-## 🧬 2. Using the Neurite Network Editor
+## 🧬 2. Using the Unified Editor
 
-If you are loaded into the **Neurite Network Editor**, you are correcting the topological CW Complex graph of neurite branches. 
+Depending on what files you mounted to the cloud container, you will see Centroids, Skeletons, or both!
 
-### What You Will See
-- **Raw Data Layer**: The original 3D TIFF image.
-- **Somas Layer**: The 3D detected cell bodies.
-- **0-Cells (Nodes)**: Branch points (junctions) and endpoints of the neurites (selectable dots).
-- **1-Cells (Edges)**: Paths connecting the nodes (lines).
-- *Unique Feature: Notice that the neurite paths are dynamically colored to exactly match the color of the soma they originate from!*
+### Proofreading Skeletons (Edges & Nodes)
+If you loaded skeletons, you are correcting the topological graph of neurite branches. 
+- **0-Cells (Nodes)**: Branch points and endpoints. Select this layer to add or delete nodes.
+- **Skeletons (Edges)**: Paths connecting the nodes.
+- To correct a connection, select the `Skeletons (Edges)` layer, click the **Add shapes** button, and draw a new connection between two nodes.
 
-### Editing Nodes (Junctions & Endpoints)
-You must use the `0-Cells (Nodes)` layer to add or remove structural points.
-- Select the `0-Cells (Nodes)` layer in the bottom-left layer list.
-- Click the **Add points** button (a circle with a plus) in the top-left toolbar to place new nodes in the 3D space.
-- Click the **Select points** button (the arrow icon) to select an existing node. You can then press `Backspace` or `Delete` to remove the node, or drag it to move it.
+### Proofreading Centroids (Somas)
+If you loaded centroids, you are correcting basic cell-counting coordinates.
+- Select the `Centroids` layer in the bottom-left panel.
+- **Delete**: Click the **Select points** tool, highlight an incorrect centroid, and press `Delete`.
+- **Add**: Click the **Add points** tool, click in the 3D space on the center of the cell body.
 
-### Editing Edges (Connections)
-- Select the `1-Cells (Edges)` layer.
-- Click the **Add shapes** button to draw a new connection between two nodes.
-- Use the **Select shapes** button to highlight incorrect connections and press `Delete`.
-
-### 🚀 Saving & Mathematical Edge Snapping
-Once you are happy with your topological edits, ensure the viewer window is focused and press **`S`** on your keyboard.
-- **Magic Edge Snapping Algorithm:** You do not need to trace paths perfectly when drawing edges! When you press `S`, the system automatically snaps the ends of your drawn edges to the nearest mathematically perfect neurite centerline (within a search radius of 8 pixels).
-- The edits are seamlessly saved directly back to the `cw_complex.json` file on the server.
-
----
-
-## 🔴 3. Using the Cell Centroid Proofreader
-
-If you are loaded into the **Cell Centroid Proofreader**, you are correcting basic cell-counting coordinates stored in `.swc` files.
-
-### What You Will See
-- **Raw Image**: The 3D microscopy stack.
-- **Centroids Layer**: A Napari Points layer containing small spheres, representing the mathematically calculated centers of the cells.
-
-### Preparing the View
-- Select the `Centroids` layer in the bottom-left panel so that the point editing tools appear in the toolbar.
-- Ensure you are in **3D mode**. You can toggle between 2D slices and 3D volume rendering using the square button located at the very bottom left corner of the image canvas.
-
-### Correcting False Positives (Deleting)
-If the algorithm mistakenly detected a cell where there is none:
-- Click the **Select points** tool (the arrow icon) in the top-left toolbar.
-- Click the incorrect centroid sphere to highlight it.
-- Press `Backspace` or `Delete` on your keyboard to remove it.
-
-### Correcting False Negatives (Adding)
-If the algorithm missed a cell:
-- Click the **Add points** tool (the circle with a plus icon).
-- Click in the 3D space directly on the center of the missed cell body to place a new centroid.
-
-### Refining Localization (Moving)
-If a centroid is slightly off-center:
-- Use the **Select points** tool to click and hold the centroid.
-- Drag the centroid to the precise correct location.
-
-### 💾 Saving Your Progress
-- Press **`S`** on your keyboard at any time. The system will instantly extract the updated 3D coordinates from the viewer and overwrite the `.swc` file on the server.
+### 🚀 Saving Your Work
+Once you are happy with your edits, ensure the viewer window is focused and press **`S`** on your keyboard.
+- **Intensity-Based Snapping:** You do not need to trace neurites perfectly! Any hand-drawn skeleton edges and nodes will automatically snap to the mathematically brightest pixel in the local 3D neighborhood of the raw image. This ensures your trace perfectly follows the center of the fluorophore signal.
+- **Format Preservation:** The unified viewer is smart. If you loaded an `.swc` file, your edits will be saved back to a strict `.swc` format (preserving node types and radiuses). If you loaded a `.json` CW-Complex, it saves back to `.json`!
