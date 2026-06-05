@@ -136,21 +136,70 @@ def run_viewer(raw_vol_path, cw_json_path, mask_vol_path=None, somas_path=None):
     
     @viewer.bind_key('s')
     def save_state(viewer):
-        print("Extracting updated geometry...")
-        # Update 0-cells
+        print("Extracting and snapping updated geometry...")
+        
+        nodes_data = viewer.layers['0-Cells (Nodes)'].data if '0-Cells (Nodes)' in viewer.layers else []
+        paths_layer_name = '1-Cells (Connected Neurons)' if '1-Cells (Connected Neurons)' in viewer.layers else '1-Cells (Edges)'
+        paths_data = viewer.layers[paths_layer_name].data if paths_layer_name in viewer.layers else []
+        
+        # --- SNAPPING LOGIC ---
+        # Snap edge endpoints to the nearest neurite centerline point to maintain continuity
+        threshold = 8.0  # pixels
+        
+        all_path_points = []
+        for p in paths_data:
+            for pt in p:
+                all_path_points.append(pt)
+        all_path_points = np.array(all_path_points) if len(all_path_points) > 0 else np.array([])
+        
+        snapped_paths = []
+        for p in paths_data:
+            new_p = np.copy(p)
+            if len(new_p) > 0 and len(all_path_points) > 0:
+                # Snap Start
+                dists_s = np.linalg.norm(all_path_points - new_p[0], axis=1)
+                dists_s[dists_s == 0] = np.inf # Ignore exact same point
+                min_s = np.argmin(dists_s)
+                if dists_s[min_s] < threshold:
+                    new_p[0] = all_path_points[min_s]
+                
+                # Snap End
+                dists_e = np.linalg.norm(all_path_points - new_p[-1], axis=1)
+                dists_e[dists_e == 0] = np.inf
+                min_e = np.argmin(dists_e)
+                if dists_e[min_e] < threshold:
+                    new_p[-1] = all_path_points[min_e]
+            snapped_paths.append(new_p)
+            
+        snapped_nodes = []
+        if len(all_path_points) > 0:
+            for n in nodes_data:
+                dists = np.linalg.norm(all_path_points - n, axis=1)
+                min_idx = np.argmin(dists)
+                if dists[min_idx] < threshold:
+                    snapped_nodes.append(all_path_points[min_idx])
+                else:
+                    snapped_nodes.append(n)
+        else:
+            snapped_nodes = nodes_data
+            
+        # Visually update the viewer layers with the snapped geometry
         if '0-Cells (Nodes)' in viewer.layers:
-            pts = viewer.layers['0-Cells (Nodes)'].data
+            viewer.layers['0-Cells (Nodes)'].data = np.array(snapped_nodes) if len(snapped_nodes) > 0 else np.empty((0,3))
+        if paths_layer_name in viewer.layers:
+            viewer.layers[paths_layer_name].data = snapped_paths
+            
+        # --- SAVE TO JSON ---
+        if '0-Cells (Nodes)' in viewer.layers:
             cw_data['cells_0_nodes'] = [
                 {
                     "node_id": i,
                     "type": "edited",
                     "coord": [int(c[0]), int(c[1]), int(c[2])]
-                } for i, c in enumerate(pts)
+                } for i, c in enumerate(snapped_nodes)
             ]
             
-        # Update 1-cells
-        if '1-Cells (Edges)' in viewer.layers:
-            paths = viewer.layers['1-Cells (Edges)'].data
+        if paths_layer_name in viewer.layers:
             cw_data['cells_1_linestrings'] = [
                 {
                     "line_id": i + 1,
@@ -158,7 +207,7 @@ def run_viewer(raw_vol_path, cw_json_path, mask_vol_path=None, somas_path=None):
                     "geometry": [[int(c[0]), int(c[1]), int(c[2])] for c in p],
                     "forest_relation": {"connects": ["edited", "edited"]},
                     "radius": [1.0] * len(p)
-                } for i, p in enumerate(paths)
+                } for i, p in enumerate(snapped_paths)
             ]
             
         save_cw_complex(cw_data, cw_json_path)
