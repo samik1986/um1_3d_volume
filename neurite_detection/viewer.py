@@ -25,7 +25,7 @@ def save_cw_complex(cw_data, json_path):
         json.dump(cw_data, f, indent=2)
     print(f"Saved updated CW Complex to {json_path}")
 
-def run_viewer(raw_vol_path, cw_json_path, mask_vol_path=None):
+def run_viewer(raw_vol_path, cw_json_path, mask_vol_path=None, somas_path=None):
     print("Loading raw volume...")
     raw_vol = tifffile.imread(raw_vol_path, out='memmap')
     
@@ -34,14 +34,19 @@ def run_viewer(raw_vol_path, cw_json_path, mask_vol_path=None):
     print("Opening Napari Viewer...")
     viewer = napari.Viewer(title="Neurite CW Complex Proofreading Viewer")
     
-    voxel_scale = (1.0, 1.0, 1.0)
+    voxel_scale = (0.5, 0.1102, 0.1102)
+    
+    print("Calculating contrast limits for Raw Volume...")
+    p1, p99 = np.percentile(raw_vol[::10, ::10, ::10], (1, 99.9))
+    print(f"Contrast limits: {p1} - {p99}")
     
     viewer.add_image(
         raw_vol, 
         name='Raw Volume', 
         scale=voxel_scale,
         colormap='magenta', 
-        blending='additive'
+        blending='additive',
+        contrast_limits=[p1, p99]
     )
     
     if mask_vol_path and os.path.exists(mask_vol_path):
@@ -53,6 +58,30 @@ def run_viewer(raw_vol_path, cw_json_path, mask_vol_path=None):
             opacity=0.3,
             visible=False
         )
+        
+    soma_color_dict = None
+    if somas_path and os.path.exists(somas_path):
+        soma_labels = tifffile.imread(somas_path, out='memmap')
+        soma_layer = viewer.add_labels(
+            soma_labels,
+            name='Detected Somas',
+            scale=voxel_scale,
+            opacity=0.8
+        )
+        # Napari assigns a random colormap by default to labels
+        # We can extract it or build our own to sync with the shapes.
+        import matplotlib.cm as cm
+        np.random.seed(42)
+        unique_somas = np.unique(soma_labels)
+        base_colors = cm.tab20(np.linspace(0, 1, 20))
+        np.random.shuffle(base_colors)
+        
+        soma_color_dict = {0: [0, 0, 0, 0]}
+        for i, sid in enumerate(unique_somas):
+            if sid == 0: continue
+            soma_color_dict[sid] = base_colors[i % 20]
+            
+        soma_layer.color = soma_color_dict
     
     # Render CW Complex 0-Cells
     nodes = cw_data.get('cells_0_nodes', [])
@@ -74,14 +103,29 @@ def run_viewer(raw_vol_path, cw_json_path, mask_vol_path=None):
     # Render CW Complex 1-Cells
     lines = cw_data.get('cells_1_linestrings', [])
     line_paths = [l['geometry'] for l in lines]
+    comp_ids = [l.get('component_id', -999) for l in lines]
+    
+    edge_colors = []
+    if soma_color_dict:
+        # Match colors to somas, use random for orphans
+        for cid in comp_ids:
+            if cid in soma_color_dict:
+                edge_colors.append(soma_color_dict[cid])
+            else:
+                # Orphan IDs are negative
+                idx = abs(cid) % 20
+                edge_colors.append(base_colors[idx])
+    else:
+        # Generic coloring if no somas
+        edge_colors = 'green'
     
     if line_paths:
         shapes_layer = viewer.add_shapes(
             line_paths,
             shape_type='path',
-            edge_color='green',
-            edge_width=1,
-            name='1-Cells (Edges)',
+            edge_color=edge_colors,
+            edge_width=2,
+            name='1-Cells (Connected Neurons)',
             scale=voxel_scale
         )
         
@@ -126,6 +170,7 @@ if __name__ == '__main__':
     parser.add_argument('--raw', required=True, help="Input raw TIFF")
     parser.add_argument('--cw', required=True, help="Input CW Complex JSON")
     parser.add_argument('--mask', help="Input binary mask TIFF (optional)")
+    parser.add_argument('--somas', help="Input Soma Labels TIFF (optional)")
     args = parser.parse_args()
     
-    run_viewer(args.raw, args.cw, args.mask)
+    run_viewer(args.raw, args.cw, args.mask, args.somas)

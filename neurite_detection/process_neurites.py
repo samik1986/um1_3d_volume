@@ -129,8 +129,23 @@ def process_tile_gpu(args):
         
         vesselness = cupy_frangi_3d(gpu_tile_norm, sigmas=sigmas)
         vesselness_smooth = cp_ndi.gaussian_filter(vesselness, sigma=1)
-        thresh_neurite = cp.percentile(vesselness_smooth, neurite_params.get('threshold_percentile', 98))
-        binary_neurite = vesselness_smooth > thresh_neurite
+        
+        # Hysteresis Thresholding
+        thresh_high = cp.percentile(vesselness_smooth, neurite_params.get('threshold_percentile', 98))
+        thresh_low = cp.percentile(vesselness_smooth, neurite_params.get('threshold_low_percentile', 85))
+        
+        binary_high = vesselness_smooth > thresh_high
+        binary_low = vesselness_smooth > thresh_low
+        
+        struct_propagate = cp.ones((3, 3, 3), dtype=bool)
+        binary_neurite = binary_high.copy()
+        
+        for _ in range(15): # 15 iterations of morphological reconstruction
+            dilated = cp_ndi.binary_dilation(binary_neurite, structure=struct_propagate)
+            new_binary = cp.logical_and(dilated, binary_low)
+            if cp.array_equal(new_binary, binary_neurite):
+                break
+            binary_neurite = new_binary
         
         struct_closing = cp.ones((5, 5, 5), dtype=bool)
         ds = neurite_params.get('dilation_size', 2)

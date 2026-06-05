@@ -23,7 +23,7 @@ def run_pipeline(input_tiff, output_dir, workers, no_vis=False):
     print(f"Input: {input_tiff}")
     print(f"Output Directory: {output_dir}")
     
-    # 1. Detection
+    # 1. Neurite Detection
     print("\n--- Step 1: GPU Accelerated Neurite Detection ---")
     t0 = time.time()
     cmd1 = ["python", "process_neurites.py", "--input", input_tiff, "--output", mask_path]
@@ -31,20 +31,28 @@ def run_pipeline(input_tiff, output_dir, workers, no_vis=False):
     t1 = time.time()
     print(f"Step 1 Complete. Time Complexity: {t1-t0:.2f}s")
     
-    # 2. CW Complex Extraction
-    print("\n--- Step 2: Skeletonization & CW Extraction ---")
-    cmd2 = ["python", "cw_extraction.py", "--input", mask_path, "--output", cw_path]
+    # 2. Soma Detection
+    print("\n--- Step 2: GPU Accelerated Soma Detection ---")
+    soma_labels_path = os.path.join(output_dir, "soma_labels.tif")
+    cmd2 = ["python", "detect_somas.py", "--input", input_tiff, "--output", soma_labels_path]
     subprocess.run(cmd2, check=True)
     t2 = time.time()
     print(f"Step 2 Complete. Time Complexity: {t2-t1:.2f}s")
     
-    # 3. Viewer Launch
+    # 3. CW Complex Extraction and Component Mapping
+    print("\n--- Step 3: Skeletonization & CW Extraction ---")
+    cmd3 = ["python", "cw_extraction.py", "--input", mask_path, "--output", cw_path, "--somas", soma_labels_path]
+    subprocess.run(cmd3, check=True)
+    t3 = time.time()
+    print(f"Step 3 Complete. Time Complexity: {t3-t2:.2f}s")
+    
+    # 4. Viewer Launch
     if not no_vis:
-        print("\n--- Step 3: Launching Napari Proofreading Viewer ---")
-        cmd3 = ["python", "viewer.py", "--raw", input_tiff, "--cw", cw_path, "--mask", mask_path]
-        subprocess.run(cmd3)
+        print("\n--- Step 4: Launching Napari Proofreading Viewer ---")
+        cmd4 = ["python", "viewer.py", "--raw", input_tiff, "--cw", cw_path, "--mask", mask_path, "--somas", soma_labels_path]
+        subprocess.run(cmd4)
     else:
-        print("\n--- Step 3: Skipping Napari Viewer (--no-vis flag passed) ---")
+        print("\n--- Step 4: Skipping Napari Viewer (--no-vis flag passed) ---")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
