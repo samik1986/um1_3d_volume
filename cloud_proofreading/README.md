@@ -134,3 +134,30 @@ If you are running this natively on a machine with Python and Napari installed, 
    - Finally, it will prompt you for an optional Centroids file (`.swc` or `.json`).
 
 Once you finish the dialogs, Napari will launch natively on your desktop, utilizing your local GPU and all of the intensity-snapping and dynamic coloring logic!
+
+---
+
+## 4. On-Premise (Institutional / Intranet) Server Setup
+
+If you want to host the streaming UI on an internal server (e.g., an institutional cluster) and access it via a web browser without public internet exposure or OAuth authentication, we provide a streamlined on-premise configuration.
+
+### How to Run the On-Premise Setup
+
+1. **Launch the Intranet Stack:**
+   Navigate to the `cloud_proofreading` folder and run the deployment script:
+   - On Linux/Mac:
+     ```bash
+     bash deploy_on_premise.sh
+     ```
+   - On Windows:
+     ```cmd
+     deploy_on_premise.bat
+     ```
+
+2. **Access the Tool Locally:**
+   Open a web browser on any computer connected to your local network (LAN) or VPN and navigate to:
+   ```
+   http://<YOUR_LOCAL_SERVER_IP>:8080
+   ```
+   
+This bypasses the Caddy HTTPS and Google OAuth proxies, exposing the Napari canvas directly to your internal network.

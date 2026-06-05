@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  # The hardware-accelerated Napari Streaming Container
+  napari_stream:
+    build: 
+      context: ../
+      dockerfile: cloud_proofreading/napari_stream/Dockerfile
+    image: ${DOCKERHUB_USERNAME:-samik1986}/napari-cloud:latest
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu, compute, utility, graphics, display]
+    environment:
+      - INPUT_RAW=${INPUT_RAW:-}
+      - INPUT_SKELETONS=${INPUT_SKELETONS:-}
+      - INPUT_CENTROIDS=${INPUT_CENTROIDS:-}
+    volumes:
+      - ${DATA_DIR:-./data}:/data
+    ports:
+      - "8080:8080"
