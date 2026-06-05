@@ -4,6 +4,20 @@ Welcome to the Cloud Proofreading Interface! This document explains how to secur
 
 Depending on how your administrator has configured the server, you will be presented with one of two tools: the **Neurite Network Editor** or the **Cell Centroid Editor**.
 
+## 🎓 Interactive Video & Tutorial
+
+**Watch the workflow in action!**
+![Proofreading Demo](proofreading_demo.gif)
+
+> [!TIP]
+> **Try it yourself!** We have built a safe, interactive training ground for you to practice without modifying real data. 
+> To launch it, run the following from your terminal:
+> ```bash
+> cd neurite_detection
+> python tutorial.py
+> ```
+> Follow the on-screen overlay instructions to learn how to add nodes, draw edges, and use the mathematical snapping feature!
+
 ---
 
 ## ☁️ 1. How to Access the Cloud Portal
