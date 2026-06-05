@@ -115,13 +115,19 @@ The exact same `unified_viewer.py` script that powers the cloud can be run nativ
 
 If you are running this natively on a machine with Python and Napari installed, you do not need to use the command line to specify your files!
 
-1. **Launch the Script:**
+1. **Install Requirements:**
+   If you have not already, install the necessary Python packages for the standalone viewer:
+   ```bash
+   pip install -r cloud_proofreading/requirements.txt
+   ```
+
+2. **Launch the Script:**
    Simply execute the script via terminal or your IDE:
    ```bash
    python cloud_proofreading/napari_stream/unified_viewer.py
    ```
 
-2. **GUI Fallback Navigation:**
+3. **GUI Fallback Navigation:**
    Because you did not pass command line arguments (like `--raw`), the script intelligently detects it is running in standalone mode. It will automatically pop up native OS File Dialog Windows!
    - You will first be prompted to select your Raw Volume `.tif` file.
    - Next, it will prompt you for an optional Skeletons file (`.swc` or `.json`). You can hit Cancel to skip.
