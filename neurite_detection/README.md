@@ -30,16 +30,22 @@ This directory contains a fast, memory-optimized, GPU-accelerated pipeline for e
 The easiest way to run the pipeline is to use the provided execution scripts. These scripts automatically create an isolated Python virtual environment, install all dependencies from `requirements.txt`, and launch the pipeline.
 
 **For Windows:**
-Simply drag and drop your `.tif` file onto `run_windows.bat` in the file explorer.
+Simply drag and drop your `.tif` file OR a folder containing multiple `.tif` files onto `run_windows.bat` in the file explorer.
 Alternatively, via command line:
 ```cmd
 run_windows.bat path\to\your\image.tif
+# OR
+run_windows.bat path\to\your\folder_of_tiffs
 ```
 
 **For Linux/macOS:**
 ```bash
 ./run_linux.sh path/to/your/image.tif
+# OR
+./run_linux.sh path/to/your/folder_of_tiffs
 ```
+
+*Note: If a folder is provided, the script will automatically batch process all TIFF files inside it, creating a separate output subdirectory for each file, and it will suppress the Napari viewer from opening automatically to prevent blocking the pipeline.*
 
 ### Option 2: Automated Pipeline (Manual Python)
 If you already have your environment setup, you can run the master script directly:

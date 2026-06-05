@@ -54,12 +54,38 @@ def run_pipeline(input_tiff, output_dir, workers, no_vis=False):
     else:
         print("\n--- Step 4: Skipping Napari Viewer (--no-vis flag passed) ---")
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input', default=r"c:\Users\banerjee\Desktop\um1_3d_volume\B3Well7_1_AN_20260529_233255_Area1_round0_20260529_233740_488_F0044_cmle.tif", help="Input TIFF path")
+    parser.add_argument('--input', default=r"c:\Users\banerjee\Desktop\um1_3d_volume\B3Well7_1_AN_20260529_233255_Area1_round0_20260529_233740_488_F0044_cmle.tif", help="Input TIFF path or folder")
     parser.add_argument('--outdir', default="output", help="Output directory")
     parser.add_argument('--workers', type=int, default=4, help="Number of GPU threads")
     parser.add_argument('--no-vis', action='store_true', help="Skip launching Napari")
     args = parser.parse_args()
     
-    run_pipeline(args.input, args.outdir, args.workers, args.no_vis)
+    if os.path.isdir(args.input):
+        print(f"=== Batch Processing Folder: {args.input} ===")
+        # Find all tif/tiff files
+        valid_exts = ('.tif', '.tiff')
+        files_to_process = [f for f in os.listdir(args.input) if f.lower().endswith(valid_exts)]
+        
+        if not files_to_process:
+            print("No TIFF files found in the specified directory.")
+            return
+            
+        print(f"Found {len(files_to_process)} files to process.")
+        for idx, filename in enumerate(files_to_process, 1):
+            file_path = os.path.join(args.input, filename)
+            # Create a unique output subdirectory for each file
+            file_basename = os.path.splitext(filename)[0]
+            file_outdir = os.path.join(args.outdir, file_basename)
+            
+            print(f"\n[{idx}/{len(files_to_process)}] Processing: {filename}")
+            # Force no-vis during batch processing to avoid blocking the pipeline
+            run_pipeline(file_path, file_outdir, args.workers, no_vis=True)
+            
+        print("\n=== Batch Processing Complete ===")
+    else:
+        run_pipeline(args.input, args.outdir, args.workers, args.no_vis)
+
+if __name__ == '__main__':
+    main()
