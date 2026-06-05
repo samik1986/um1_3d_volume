@@ -50,7 +50,7 @@ def binary_to_cw_complex(binary_path, out_json_path):
         
     # Process 1-cells
     line_id = 1
-    for u, v, key, data in graph.edges(keys=True, data=True):
+    for u, v, data in graph.edges(data=True):
         coords = data.get('pts', [])
         if len(coords) == 0:
             coords = [graph.nodes[u]['o'], graph.nodes[v]['o']]
