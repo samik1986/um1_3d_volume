@@ -1,0 +1,9 @@
+numpy
+scipy
+tifffile
+scikit-image>=0.19.0
+networkx
+sknw
+napari[all]
+matplotlib
+cupy-cuda12x

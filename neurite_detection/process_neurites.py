@@ -166,7 +166,6 @@ def process_tile_gpu(args):
         x_keep_end = x_keep_start + (xe - xs)
         
         neurite_clean = neurite_crop[z_keep_start:z_keep_end, y_keep_start:y_keep_end, x_keep_start:x_keep_end]
-        cp.get_default_memory_pool().free_all_blocks()
         
     return (zs, ze, ys, ye, xs, xe), neurite_clean
 
@@ -215,6 +214,10 @@ def detect_neurites_volume(volume_path, output_path, workers=4, tile_size=(64, 5
                     processed_count += 1
                     if processed_count % 5 == 0 or processed_count == len(tile_tasks):
                         print(f"Processed {processed_count}/{len(tile_tasks)} tiles ({processed_count/len(tile_tasks)*100:.1f}%)")
+                        
+                    # Periodically free memory pool in the main thread to prevent fragmentation
+                    if processed_count % 20 == 0:
+                        cp.get_default_memory_pool().free_all_blocks()
                 except Exception as exc:
                     print(f"GPU Tile generated an exception: {exc}")
     else:

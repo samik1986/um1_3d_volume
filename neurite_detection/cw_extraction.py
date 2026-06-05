@@ -35,10 +35,30 @@ def binary_to_cw_complex(binary_path, out_json_path, soma_labels_path=None):
         print("Subtracting soma volumes from neurite mask...")
         binary_vol[somas_vol > 0] = False
     
-    print("Skeletonizing 3D volume...")
-    t1 = time.time()
-    skeleton = skeletonize(binary_vol)
-    print(f"Skeletonization complete in {time.time()-t1:.2f}s")
+    print("Cropping 3D volume to bounding box to accelerate skeletonization...")
+    t_crop = time.time()
+    coords = np.nonzero(binary_vol)
+    
+    skeleton = np.zeros_like(binary_vol)
+    if len(coords[0]) > 0:
+        z_min, z_max = coords[0].min(), coords[0].max()
+        y_min, y_max = coords[1].min(), coords[1].max()
+        x_min, x_max = coords[2].min(), coords[2].max()
+        
+        cropped_vol = binary_vol[z_min:z_max+1, y_min:y_max+1, x_min:x_max+1]
+        print(f"Cropped volume from {binary_vol.shape} to {cropped_vol.shape} in {time.time() - t_crop:.2f}s")
+        
+        print("Skeletonizing cropped 3D volume...")
+        t1 = time.time()
+        try:
+            skel_crop = skeletonize(cropped_vol, method='lee')
+        except TypeError:
+            # Fallback for older scikit-image versions
+            from skimage.morphology import skeletonize_3d
+            skel_crop = skeletonize_3d(cropped_vol)
+        print(f"Skeletonization complete in {time.time()-t1:.2f}s")
+        
+        skeleton[z_min:z_max+1, y_min:y_max+1, x_min:x_max+1] = skel_crop
     
     print("Extracting graph using sknw...")
     t2 = time.time()

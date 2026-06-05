@@ -71,7 +71,6 @@ def process_tile_soma_gpu(args):
         x_keep_end = x_keep_start + (xe - xs)
         
         soma_clean = soma_crop[z_keep_start:z_keep_end, y_keep_start:y_keep_end, x_keep_start:x_keep_end]
-        cp.get_default_memory_pool().free_all_blocks()
         
     return (zs, ze, ys, ye, xs, xe), soma_clean
 
@@ -117,6 +116,10 @@ def detect_somas(volume_path, output_path, workers=4, tile_size=(64, 512, 512), 
                 processed_count += 1
                 if processed_count % 10 == 0 or processed_count == len(tile_tasks):
                     print(f"Processed {processed_count}/{len(tile_tasks)} tiles")
+                    
+                # Periodically free memory pool in the main thread to prevent fragmentation
+                if processed_count % 20 == 0:
+                    cp.get_default_memory_pool().free_all_blocks()
     else:
         print("ERROR: GPU/CuPy not found.")
         sys.exit(1)
