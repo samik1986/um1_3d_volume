@@ -20,16 +20,31 @@ Double-click `deploy_cloud.bat`
 2. Automatically pulls the latest `napari-cloud` Docker image from your Docker Hub registry.
 3. Bootstraps the `docker-compose.yml` stack, turning on the Google OAuth gateway and the VNC server.
 
+## 🖥️ Bare-Metal Server Setup
+
+If you are starting from a completely fresh, empty Ubuntu Server (or physical machine) with an NVIDIA GPU, you do not need to manually install Docker or the GPU drivers.
+
+Simply run the automated bootstrap script:
+```bash
+sudo ./bare_metal_setup/bootstrap_ubuntu_gpu.sh
+```
+This script will automatically:
+1. Install Docker and Docker Compose.
+2. Install the proprietary NVIDIA Drivers.
+3. Install the NVIDIA Container Toolkit so Docker can access the GPU.
+*Note: You must reboot the machine after running this script.*
+
 ---
 
 ## ⚙️ Configuration Requirements
 
-Before your first deployment, you must configure the Google Login authentication. 
+Before your first deployment, you must configure the environment variables so that the Secure HTTPS Gateway (Caddy) and Google Login function correctly. 
 
 1. Copy `.env.example` to a new file named `.env`.
-2. Generate an OAuth 2.0 Web Application credential in the **Google Cloud Console**.
-3. Set the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in the `.env` file.
-4. Set the `DATA_DIR` in the `.env` file to point to the local folder on your VM where the TIFFs and JSONs are stored.
+2. Set the `SERVER_IP` to your machine's public IP address. (Caddy uses this to magically generate a free, valid Let's Encrypt SSL certificate via `nip.io`).
+3. Generate an OAuth 2.0 Web Application credential in the **Google Cloud Console**.
+4. Set the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in the `.env` file. (Make sure your Authorized Redirect URI in Google matches the `SERVER_IP.nip.io` domain).
+5. Set the `DATA_DIR` in the `.env` file to point to the local folder on your VM where the TIFFs and JSONs are stored.
 
 Once the `.env` is configured, running the 1-click deployment script will bring the secure website online!
 
