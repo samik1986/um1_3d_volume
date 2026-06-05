@@ -26,8 +26,23 @@ This directory contains a fast, memory-optimized, GPU-accelerated pipeline for e
 
 ## 🚀 Execution Guide
 
-### Option 1: Automated Pipeline (Recommended)
-You can run the entire workflow end-to-end using the master script.
+### Option 1: One-Click Execution (Machine Independent)
+The easiest way to run the pipeline is to use the provided execution scripts. These scripts automatically create an isolated Python virtual environment, install all dependencies from `requirements.txt`, and launch the pipeline.
+
+**For Windows:**
+Simply drag and drop your `.tif` file onto `run_windows.bat` in the file explorer.
+Alternatively, via command line:
+```cmd
+run_windows.bat path\to\your\image.tif
+```
+
+**For Linux/macOS:**
+```bash
+./run_linux.sh path/to/your/image.tif
+```
+
+### Option 2: Automated Pipeline (Manual Python)
+If you already have your environment setup, you can run the master script directly:
 
 ```bash
 cd neurite_detection
