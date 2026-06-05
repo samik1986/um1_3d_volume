@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # The hardware-accelerated Napari Streaming Container
+  napari_stream:
+    build: 
+      context: ../
+      dockerfile: cloud_proofreading/napari_stream/Dockerfile
+    image: ${DOCKERHUB_USERNAME:-yourusername}/napari-cloud:latest
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu, compute, utility, graphics, display]
+    environment:
+      # Optional: Auto-load files on boot by specifying paths mounted into the container
+      # e.g. INPUT_RAW=/data/my_image.tif
+      - INPUT_RAW=${INPUT_RAW:-}
+      - INPUT_CW=${INPUT_CW:-}
+      - INPUT_MASK=${INPUT_MASK:-}
+      - INPUT_SOMAS=${INPUT_SOMAS:-}
+    volumes:
+      # Mount the host directory containing TIFFs/JSONs to /data in the container
+      - ${DATA_DIR:-./data}:/data
+    expose:
+      - "8080"
+
+  # Google OAuth2 Reverse Proxy Gateway
+  oauth2_proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:latest
+    restart: unless-stopped
+    ports:
+      - "80:4180"  # Expose proxy on port 80
+    environment:
+      - OAUTH2_PROXY_PROVIDER=google
+      - OAUTH2_PROXY_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - OAUTH2_PROXY_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - OAUTH2_PROXY_COOKIE_SECRET=${COOKIE_SECRET}
+      # The email domains allowed to login (e.g. your lab's domain). Use * for any google account.
+      - OAUTH2_PROXY_EMAIL_DOMAINS=*
+      # Route traffic to the internal noVNC server
+      - OAUTH2_PROXY_UPSTREAMS=http://napari_stream:8080
+      - OAUTH2_PROXY_HTTP_ADDRESS=0.0.0.0:4180
