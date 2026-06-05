@@ -71,4 +71,5 @@ python utils/viewer.py --raw "path/to/image.tif" --cw "output/cw_complex.json" -
 When using the proofreading viewer (`utils/viewer.py`):
 - In Napari, select the `0-Cells (Nodes)` layer to add/move/delete junctions and endpoints.
 - Select the `1-Cells (Edges)` layer to modify the paths.
+- **Edge Snapping**: Newly added or edited edges automatically snap to the nearest neurite centerlines, ensuring physical and topological continuity is maintained.
 - Press **`S`** to overwrite and save your topological edits directly back into the `cw_complex.json` file on disk.
