@@ -317,4 +317,29 @@ if __name__ == '__main__':
     parser.add_argument('--centroids', default=None)
     args = parser.parse_args()
     
-    run_viewer(args.raw, args.skeletons, args.centroids)
+    raw = args.raw
+    skel = args.skeletons
+    cent = args.centroids
+    
+    if raw is None:
+        try:
+            from qtpy.QtWidgets import QApplication, QFileDialog
+            app = QApplication.instance() or QApplication(sys.argv)
+            
+            raw, _ = QFileDialog.getOpenFileName(None, "Select Raw Volume TIFF (Required)", "", "TIFF Files (*.tif *.tiff);;All Files (*)")
+            if raw:
+                print(f"Selected Raw Volume: {raw}")
+                skel_reply, _ = QFileDialog.getOpenFileName(None, "Select Skeletons File (Optional, Cancel to skip)", "", "Skeletons (*.swc *.json);;All Files (*)")
+                if skel_reply:
+                    skel = skel_reply
+                    
+                cent_reply, _ = QFileDialog.getOpenFileName(None, "Select Centroids File (Optional, Cancel to skip)", "", "Centroids (*.swc *.json);;All Files (*)")
+                if cent_reply:
+                    cent = cent_reply
+            else:
+                print("No raw volume selected. The viewer needs a raw volume to function properly.")
+        except ImportError:
+            print("qtpy not found. Please provide --raw argument to run standalone, or install qtpy/pyqt5.")
+            
+    if raw:
+        run_viewer(raw, skel, cent)
