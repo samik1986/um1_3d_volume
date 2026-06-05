@@ -7,16 +7,20 @@ Depending on how your administrator has configured the server, you will be prese
 ## 🎓 Interactive Video & Tutorial
 
 **Watch the workflow in action!**
-![Proofreading Demo](proofreading_demo.gif)
+### 1. Neurite Editor Demo
+![Neurite Proofreading Demo](proofreading_neurites_demo.gif)
+
+### 2. Centroid Editor Demo
+![Centroid Proofreading Demo](proofreading_centroids_demo.gif)
 
 > [!TIP]
-> **Try it yourself!** We have built a safe, interactive training ground for you to practice without modifying real data. 
+> **Try it yourself!** We have built a safe, interactive training ground using purely synthetic dummy data for you to practice without modifying real data. 
 > To launch it, run the following from your terminal:
 > ```bash
 > cd neurite_detection
-> python tutorial.py
+> python tutorial.py --mode neurites  # Or try: --mode centroids
 > ```
-> Follow the on-screen overlay instructions to learn how to add nodes, draw edges, and use the mathematical snapping feature!
+> Follow the on-screen overlay instructions to learn the tools!
 
 ---
 

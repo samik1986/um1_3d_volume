@@ -1,0 +1,92 @@
+{
+  "cells_0_nodes": [
+    {
+      "node_id": 1,
+      "type": "endpoint",
+      "coord": [
+        16,
+        64,
+        64
+      ]
+    },
+    {
+      "node_id": 2,
+      "type": "endpoint",
+      "coord": [
+        16,
+        100,
+        100
+      ]
+    },
+    {
+      "node_id": 3,
+      "type": "endpoint",
+      "coord": [
+        16,
+        150,
+        150
+      ]
+    },
+    {
+      "node_id": 4,
+      "type": "endpoint",
+      "coord": [
+        16,
+        192,
+        192
+      ]
+    }
+  ],
+  "cells_1_linestrings": [
+    {
+      "line_id": 1,
+      "component_id": 1,
+      "endpoints": {
+        "source_id": 1,
+        "target_id": 2
+      },
+      "geometry": [
+        [
+          16,
+          64,
+          64
+        ],
+        [
+          16,
+          80,
+          80
+        ],
+        [
+          16,
+          100,
+          100
+        ]
+      ]
+    },
+    {
+      "line_id": 2,
+      "component_id": 2,
+      "endpoints": {
+        "source_id": 3,
+        "target_id": 4
+      },
+      "geometry": [
+        [
+          16,
+          150,
+          150
+        ],
+        [
+          16,
+          170,
+          170
+        ],
+        [
+          16,
+          192,
+          192
+        ]
+      ]
+    }
+  ]
+}
