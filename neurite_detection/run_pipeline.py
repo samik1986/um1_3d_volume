@@ -49,7 +49,7 @@ def run_pipeline(input_tiff, output_dir, workers, no_vis=False):
     # 4. Viewer Launch
     if not no_vis:
         print("\n--- Step 4: Launching Napari Proofreading Viewer ---")
-        cmd4 = ["python", "viewer.py", "--raw", input_tiff, "--cw", cw_path, "--mask", mask_path, "--somas", soma_labels_path]
+        cmd4 = ["python", "utils/viewer.py", "--raw", input_tiff, "--cw", cw_path, "--mask", mask_path, "--somas", soma_labels_path]
         subprocess.run(cmd4)
     else:
         print("\n--- Step 4: Skipping Napari Viewer (--no-vis flag passed) ---")
