@@ -128,6 +128,41 @@ def save_swc_skeleton(filepath, paths, original_points, original_attrs):
     print(f"Saved SWC Skeleton to {filepath}")
 
 
+def color_connected_components(paths):
+    """
+    Identifies connected paths (unique trees) and assigns a distinct color to each tree.
+    """
+    import matplotlib.cm as cm
+    graph = nx.Graph()
+    for i, path in enumerate(paths):
+        if len(path) > 0:
+            # Keys based on endpoints
+            p1_key = f"{path[0][0]:.2f}_{path[0][1]:.2f}_{path[0][2]:.2f}"
+            p2_key = f"{path[-1][0]:.2f}_{path[-1][1]:.2f}_{path[-1][2]:.2f}"
+            graph.add_node(p1_key)
+            graph.add_node(p2_key)
+            # networkx MultiGraph allows multiple edges between same nodes, but Graph overwrites
+            # We will just append path_idx to a list
+            if graph.has_edge(p1_key, p2_key):
+                graph[p1_key][p2_key]['path_idxs'].append(i)
+            else:
+                graph.add_edge(p1_key, p2_key, path_idxs=[i])
+            
+    components = list(nx.connected_components(graph))
+    
+    base_colors = cm.tab20(np.linspace(0, 1, 20))
+    colors = ['cyan'] * len(paths)
+    
+    for comp_idx, comp_nodes in enumerate(components):
+        color = base_colors[comp_idx % 20]
+        subgraph = graph.subgraph(comp_nodes)
+        for u, v, data in subgraph.edges(data=True):
+            for idx in data.get('path_idxs', []):
+                colors[idx] = color
+                
+    return colors
+
+
 def run_viewer(raw_path, skeletons_path, centroids_path):
     viewer = napari.Viewer(title="Unified Proofreading Viewer")
     voxel_scale = (0.5, 0.1102, 0.1102)
@@ -152,7 +187,8 @@ def run_viewer(raw_path, skeletons_path, centroids_path):
         if skeletons_path.endswith('.swc'):
             paths, orig_skel_pts, orig_skel_attrs = parse_swc_skeleton(skeletons_path)
             if paths:
-                viewer.add_shapes(paths, shape_type='path', edge_color='cyan', edge_width=2, name='Skeletons (Edges)', scale=voxel_scale)
+                colors = color_connected_components(paths)
+                viewer.add_shapes(paths, shape_type='path', edge_color=colors, edge_width=2, name='Skeletons (Edges)', scale=voxel_scale)
         elif skeletons_path.endswith('.json'):
             with open(skeletons_path, 'r') as f:
                 cw_skel_data = json.load(f)
@@ -161,7 +197,8 @@ def run_viewer(raw_path, skeletons_path, centroids_path):
             if nodes:
                 viewer.add_points(np.array(nodes), name='Skeleton (Nodes)', size=3, face_color='red', scale=voxel_scale)
             if paths:
-                viewer.add_shapes(paths, shape_type='path', edge_color='cyan', edge_width=2, name='Skeletons (Edges)', scale=voxel_scale)
+                colors = color_connected_components(paths)
+                viewer.add_shapes(paths, shape_type='path', edge_color=colors, edge_width=2, name='Skeletons (Edges)', scale=voxel_scale)
 
     # --- LOAD CENTROIDS ---
     cw_cent_data = None
@@ -233,6 +270,9 @@ def run_viewer(raw_path, skeletons_path, centroids_path):
                 
             if shapes_layer:
                 shapes_layer.data = snapped_paths
+                new_colors = color_connected_components(snapped_paths)
+                shapes_layer.edge_color = new_colors
+                shapes_layer.refresh()
             if nodes_layer:
                 nodes_layer.data = np.array(snapped_nodes) if len(snapped_nodes) > 0 else np.empty((0,3))
             
