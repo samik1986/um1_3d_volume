@@ -85,7 +85,12 @@ def main():
             
         print("\n=== Batch Processing Complete ===")
     else:
-        run_pipeline(args.input, args.outdir, args.workers, args.no_vis)
+        # Always create a distinct output subdirectory based on the filename
+        filename = os.path.basename(args.input)
+        file_basename = os.path.splitext(filename)[0]
+        file_outdir = os.path.join(args.outdir, file_basename)
+        
+        run_pipeline(args.input, file_outdir, args.workers, args.no_vis)
 
 if __name__ == '__main__':
     main()
