@@ -57,10 +57,24 @@ The pipeline automatically creates an output directory and populates it with the
    - `[prefix]_cw_complex_micrometers.json`: The physically scaled JSON graph.
 
 
-## Proofreading Edits
+## Visualization
 
-If you utilize the `--visualize` flag, the pipeline will launch Napari immediately after generating the files, loading the massive original array via lazy memory-mapping (`tifffile.memmap`), alongside the extracted Somas and Skeletons.
+The pipeline provides two powerful visualization tools built on Napari.
 
-### Hotkeys
+### 1. The Flexible Visualizer
+If you want to view arbitrary sets of files, you can use the standalone `flex_visualizer.py`. It dynamically inspects file extensions and loads them into their optimal Napari layers simultaneously:
+```bash
+python pipeline/visualization/flex_visualizer.py raw_image.tif soma_mask.npy neurite_mask.npy skeletons.swc skeletons.json
+```
+- `.tif` -> Loaded as lazily memory-mapped 3D Volumes
+- `.npy` -> Loaded as semi-transparent 3D Labels (if masks)
+- `.swc` -> Loaded as 3D Line Shapes
+- `.json` (CW Complex) -> Loaded as 3D Points (Nodes) and 3D Paths (Edges)
+
+### 2. The Interactive Proofreader
+If you utilize the `--visualize` flag when running the pipeline, it will automatically launch the Interactive Proofreader immediately after generation. 
+
+#### Hotkeys
 - **Snap to Intensity (F)**: Select any skeleton shape with the Napari Vertex tool and press `F`. The script will search the local 3D neighborhood of the raw image and automatically snap every vertex of your selected skeleton precisely to the maximum fluorescent intensity peak!
 - **Save Edits (S)**: Press `S` to instantly overwrite the `cw_complex.json` file with your modified graphs.
+

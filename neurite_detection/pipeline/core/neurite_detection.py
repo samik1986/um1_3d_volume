@@ -9,6 +9,8 @@ import threading
 import sys
 import os
 
+from config import FRANGI_SIGMAS, MIN_NEURITE_SIZE
+
 try:
     import cupy as cp
     import cupy_backends
@@ -192,7 +194,7 @@ def detect_neurites(image_path, custom_thresh=None, soma_masks=None, use_gpu=Tru
         low_thresh = frangi_thresh * 0.20  # dynamically scale the low threshold
         print(f"Adaptive Frangi sensitivity set to: {frangi_thresh} (Seeds) and {low_thresh:.5f} (Faint Path Connections)")
         
-        frangi_params = {'sigmas': [1.0, 2.0, 4.0, 6.0, 8.0], 'alpha': 0.5, 'beta': 0.5, 'frangi_thresh': frangi_thresh, 'low_thresh': low_thresh}
+        frangi_params = {'sigmas': FRANGI_SIGMAS, 'alpha': 0.5, 'beta': 0.5, 'frangi_thresh': frangi_thresh, 'low_thresh': low_thresh}
         task_args = [(task, frangi_params) for task in tile_tasks]
         
         processed_count = 0
@@ -241,7 +243,7 @@ def detect_neurites(image_path, custom_thresh=None, soma_masks=None, use_gpu=Tru
     gpu_binary = cp.asarray(binary_cpu)
     labels_gpu, num_features = cp_ndi.label(gpu_binary)
     voxel_counts = cp.bincount(labels_gpu.ravel())
-    keep_mask = voxel_counts >= 2000
+    keep_mask = voxel_counts >= MIN_NEURITE_SIZE
     keep_mask[0] = False
     filtered_gpu_binary = keep_mask[labels_gpu]
     binary_cpu = cp.asnumpy(filtered_gpu_binary)
@@ -291,5 +293,9 @@ def detect_neurites(image_path, custom_thresh=None, soma_masks=None, use_gpu=Tru
             
     print(f"Extracted 3D morphological skeleton in {time.time()-t2:.2f}s")
     
+    del GLOBAL_VOL
     GLOBAL_VOL = None
+    import gc
+    gc.collect()
+    
     return binary_cpu, binary_skel

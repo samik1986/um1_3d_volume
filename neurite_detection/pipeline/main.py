@@ -61,7 +61,19 @@ def main():
     print("\n====================")
     print("3. Graph Export (SWC & JSON)")
     print("====================")
-    export_graphs(binary_skel, args.output_dir, args.scale_z, args.scale_y, args.scale_x, centroids_488=c488_soma, out_prefix=prefix)
+    
+    # Memory Management: Free arrays before graph export to prevent OOM
+    del neurite_mask
+    if 'mask488_soma' in locals() and mask488_soma is not None:
+        del mask488_soma
+    import gc
+    gc.collect()
+    
+    try:
+        export_graphs(binary_skel, args.output_dir, args.scale_z, args.scale_y, args.scale_x, centroids_488=c488_soma, out_prefix=prefix)
+    except Exception as e:
+        print(f"\n[WARNING] Graph Export failed due to memory error or topology complexity. Skipping JSON/SWC export.")
+        print(f"Error details: {e}")
     
     if args.visualize:
         print("\n====================")
