@@ -1,0 +1,11 @@
+__pycache__/
+*.tif
+*.tiff
+*.npy
+*.npz
+*.swc
+*.json
+pipeline_output/
+.venv/
+venv/
+*.log
