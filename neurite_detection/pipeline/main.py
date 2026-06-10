@@ -1,4 +1,7 @@
+# Author: Samik Banerjee
+
 import os
+
 import argparse
 import numpy as np
 from config import DEFAULT_INPUT_DIR, DEFAULT_OUTPUT_DIR, CHANNEL_488, PHYSICAL_SCALE

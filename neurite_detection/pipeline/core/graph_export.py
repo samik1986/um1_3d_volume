@@ -1,6 +1,9 @@
+# Author: Samik Banerjee
+
 import os
 import json
 import numpy as np
+# pyrefly: ignore [missing-import]
 import sknw
 from scipy import ndimage
 
@@ -21,8 +24,8 @@ def export_graphs(binary_skel, output_dir, scale_z, scale_y, scale_x, centroids_
     f_swc.write("# Skeletons converted from sknw\n# Units: voxels\n# Node Types: 3=Skeleton, 2=Cell_488\n")
     f_swc_scaled.write(f"# Skeletons converted from sknw (Scaled Z={scale_z}, Y={scale_y}, X={scale_x})\n# Units: micrometers\n# Node Types: 3=Skeleton, 2=Cell_488\n")
     
-    f_json.write('{\n  "metadata": {"units": "voxels"},\n  "cells_0_nodes": [\n')
-    f_json_scaled.write('{\n  "metadata": {"units": "micrometers", "scale_factors": {"Z": ' + str(scale_z) + ', "Y": ' + str(scale_y) + ', "X": ' + str(scale_x) + '}},\n  "cells_0_nodes": [\n')
+    f_json.write('{\n  "metadata": {"author": "Samik Banerjee", "units": "voxels"},\n  "cells_0_nodes": [\n')
+    f_json_scaled.write('{\n  "metadata": {"author": "Samik Banerjee", "units": "micrometers", "scale_factors": {"Z": ' + str(scale_z) + ', "Y": ' + str(scale_y) + ', "X": ' + str(scale_x) + '}},\n  "cells_0_nodes": [\n')
     
     global_node_id = 1
     

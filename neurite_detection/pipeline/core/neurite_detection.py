@@ -1,3 +1,5 @@
+# Author: Samik Banerjee
+
 import time
 import numpy as np
 import tifffile

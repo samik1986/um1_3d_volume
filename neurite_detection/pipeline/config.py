@@ -1,3 +1,5 @@
+# Author: Samik Banerjee
+
 import os
 
 # Physical Dimensions (Z, Y, X)

@@ -1,3 +1,5 @@
+# Author: Samik Banerjee
+
 import os
 import sys
 import json
