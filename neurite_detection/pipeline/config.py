@@ -1,4 +1,12 @@
-# Author: Samik Banerjee
+"""
+config.py (neurite_detection/pipeline)
+
+Author: Samik Banerjee
+Date: June 10, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+
+Configuration parameters for the Neurite Detection Pipeline.
+"""
 
 import os
 

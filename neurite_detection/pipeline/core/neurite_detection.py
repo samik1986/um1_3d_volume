@@ -1,4 +1,12 @@
-# Author: Samik Banerjee
+"""
+neurite_detection.py (neurite_detection/pipeline/core)
+
+Author: Samik Banerjee
+Date: June 10, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+
+Skeletonizes the neurite volume using GPU Frangi filtering and CPU topological tracing.
+"""
 
 import time
 import numpy as np

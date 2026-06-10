@@ -1,4 +1,12 @@
-# Author: Samik Banerjee
+"""
+proofreader.py (neurite_detection/pipeline/visualization)
+
+Author: Samik Banerjee
+Date: June 10, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+
+Interactive Napari proofreader for correcting network topologies with intensity snapping.
+"""
 
 import os
 import napari

@@ -1,4 +1,12 @@
-# Author: Samik Banerjee
+"""
+flex_visualizer.py (neurite_detection/pipeline/visualization)
+
+Author: Samik Banerjee
+Date: June 10, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+
+A flexible visualizer that dynamically loads unlimited layers of various extensions.
+"""
 
 import os
 import sys

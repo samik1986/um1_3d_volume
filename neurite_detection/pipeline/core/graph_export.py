@@ -1,4 +1,12 @@
-# Author: Samik Banerjee
+"""
+graph_export.py (neurite_detection/pipeline/core)
+
+Author: Samik Banerjee
+Date: June 10, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+
+Exports the topological graph components into CW Complex JSON and SWC formats.
+"""
 
 import os
 import json
