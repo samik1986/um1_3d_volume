@@ -13,17 +13,25 @@ The pipeline handles dense, noisy volumes by automatically slicing the array int
 
 ## Getting Started
 
-You only need to supply your target TIFF file. The script will automatically derive a prefix from your filename and prepend it to all outputs in your designated folder.
+You only need to supply your target TIFF file. The wrapper scripts will automatically install all Python dependencies via `pip` and derive a prefix from your filename to organize your outputs.
 
 ### Run the Pipeline
+For Windows:
 ```powershell
-python main.py --input_file "path/to/your/488_channel.tif" --output_dir "pipeline_output" --visualize
+.\run_pipeline.bat --input_file "path/to/your/488_channel.tif" --output_dir "pipeline_output" --visualize
+```
+
+For Linux / Mac:
+```bash
+./run_pipeline.sh --input_file "path/to/your/488_channel.tif" --output_dir "pipeline_output" --visualize
 ```
 
 ### Advanced Overrides
 - **Custom Thresholds**: You can manually override the Otsu cutoff thresholds for either step:
   - `--thresh_488 1200.5` (Tunes the strictness of the neurite extraction)
   - `--thresh_488_soma 95.0` (Tunes the percentile cutoff for the soma extraction)
+- **Physical Scaling**: Override the hardcoded voxel resolution for the JSON/SWC graph exports:
+  - `--scale_x 0.2 --scale_y 0.2 --scale_z 1.0`
 - **Output Naming**: If you don't want the pipeline to inherit the native filename prefix:
   - `--out_prefix "Sample_A"`
 - **Hardware Fallback**: If your VRAM is completely overwhelmed, append `--disable_gpu` to fall back entirely to CPU computation.
