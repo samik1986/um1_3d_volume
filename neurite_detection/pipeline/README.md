@@ -62,9 +62,9 @@ The pipeline automatically creates an output directory and populates it with the
 The pipeline provides two powerful visualization tools built on Napari.
 
 ### 1. The Flexible Visualizer
-If you want to view arbitrary sets of files, you can use the standalone `flex_visualizer.py`. It dynamically inspects file extensions and loads them into their optimal Napari layers simultaneously:
+If you want to view arbitrary sets of files, you can use the standalone `flex_visualizer.py`. It supports **any number of layers** simultaneously, as long as they use the known supported file extensions. It dynamically inspects the file extensions and automatically loads them into their optimal Napari layers:
 ```bash
-python pipeline/visualization/flex_visualizer.py raw_image.tif soma_mask.npy neurite_mask.npy skeletons.swc skeletons.json
+python pipeline/visualization/flex_visualizer.py raw_image.tif soma_mask.npy neurite_mask.npy skeletons.swc skeletons.json another_mask.npy
 ```
 - `.tif` -> Loaded as lazily memory-mapped 3D Volumes
 - `.npy` -> Loaded as semi-transparent 3D Labels (if masks)
