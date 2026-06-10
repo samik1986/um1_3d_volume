@@ -192,7 +192,7 @@ def detect_neurites(image_path, custom_thresh=None, soma_masks=None, use_gpu=Tru
         low_thresh = frangi_thresh * 0.20  # dynamically scale the low threshold
         print(f"Adaptive Frangi sensitivity set to: {frangi_thresh} (Seeds) and {low_thresh:.5f} (Faint Path Connections)")
         
-        frangi_params = {'sigmas': [1.0, 2.0, 4.0], 'alpha': 0.5, 'beta': 0.5, 'frangi_thresh': frangi_thresh, 'low_thresh': low_thresh}
+        frangi_params = {'sigmas': [1.0, 2.0, 4.0, 6.0, 8.0], 'alpha': 0.5, 'beta': 0.5, 'frangi_thresh': frangi_thresh, 'low_thresh': low_thresh}
         task_args = [(task, frangi_params) for task in tile_tasks]
         
         processed_count = 0
