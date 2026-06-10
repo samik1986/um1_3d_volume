@@ -35,6 +35,27 @@ For Linux / Mac:
 - **Output Naming**: If you don't want the pipeline to inherit the native filename prefix:
   - `--out_prefix "Sample_A"`
 - **Hardware Fallback**: If your VRAM is completely overwhelmed, append `--disable_gpu` to fall back entirely to CPU computation.
+## Input Specifications
+
+The pipeline strictly expects a **single-channel 3D TIFF** volume representing the fluorescent neurite channel (e.g., 488nm).
+- **Dimensions**: Z, Y, X (Standard TIFF stack).
+- **Scale**: The data should be isotropic or scaled in memory. If the Z-axis scaling differs from X/Y, ensure you provide the `--scale_z`, `--scale_x`, and `--scale_y` overrides when running the pipeline so the physical outputs are stretched correctly.
+
+## Output Specifications
+
+The pipeline automatically creates an output directory and populates it with the following dataset formats:
+
+1. **Boolean Numpy Masks (`.npy`)**:
+   - `[prefix]_soma_mask_488.npy`: A 3D boolean volume of the dense cell bodies.
+   - `[prefix]_neurite_mask_488.npy`: A 3D boolean volume of the thick volumetric dendrites.
+   - `[prefix]_skeleton_mask_488.npy`: A 3D boolean volume of the 1-pixel wide morphological skeleton paths.
+2. **SWC Files (`.swc`)**:
+   - `[prefix]_skeletons.swc`: The raw voxel-coordinate topological graph.
+   - `[prefix]_skeletons_micrometers.swc`: The physical graph scaled by the XYZ resolution parameters.
+3. **CW-Complex JSON (`.json`)**:
+   - `[prefix]_cw_complex.json`: The raw voxel-coordinate graph structured with vertices and edges.
+   - `[prefix]_cw_complex_micrometers.json`: The physically scaled JSON graph.
+
 
 ## Proofreading Edits
 
