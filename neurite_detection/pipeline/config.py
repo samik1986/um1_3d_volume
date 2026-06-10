@@ -10,7 +10,7 @@ DEFAULT_INPUT_DIR = r"c:\Users\banerjee\Desktop\um1_3d_volume"
 DEFAULT_OUTPUT_DIR = r"c:\Users\banerjee\Desktop\um1_3d_volume\neurite_detection\pipeline_output"
 
 # Detection Parameters
-FRANGI_SIGMAS = [1.0, 2.0, 4.0, 6.0, 8.0]
+FRANGI_SIGMAS = [2.0, 4.0, 6.0, 8.0, 12.0]
 MIN_NEURITE_SIZE = 2000
 
 # File patterns
