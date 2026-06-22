@@ -175,6 +175,25 @@ def detect_neurites(image_path, custom_thresh=None, soma_masks=None, use_gpu=Tru
     t0 = time.time()
     
     GLOBAL_VOL = tifffile.imread(image_path)
+    
+    # Load and apply pipeline parameters
+    param_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "pipeline_parameters.json")
+    if os.path.exists(param_path):
+        import json
+        with open(param_path, 'r') as f:
+            params = json.load(f)
+            gamma = params.get('gamma', 1.0)
+            c_min, c_max = params.get('contrast_limits', [0, 65535])
+            print(f"Applying interactive parameters: Gamma={gamma}, Contrast=[{c_min}, {c_max}]")
+            np.clip(GLOBAL_VOL, np.uint16(c_min), np.uint16(c_max), out=GLOBAL_VOL)
+            GLOBAL_VOL = GLOBAL_VOL.astype(np.float32, copy=False)
+            GLOBAL_VOL -= c_min
+            GLOBAL_VOL /= np.float32(c_max - c_min + 1e-8)
+            if gamma != 1.0:
+                GLOBAL_VOL = np.power(GLOBAL_VOL, gamma, out=GLOBAL_VOL)
+            GLOBAL_VOL *= 65535.0
+            GLOBAL_VOL = GLOBAL_VOL.astype(np.uint16)
+            
     depth, height, width = GLOBAL_VOL.shape
     print(f"Loaded 488 volume: {GLOBAL_VOL.shape} in {time.time()-t0:.2f}s")
     
