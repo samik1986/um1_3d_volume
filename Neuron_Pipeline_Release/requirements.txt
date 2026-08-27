@@ -1,0 +1,8 @@
+cupy
+cupyx
+networkx
+tifffile
+scipy
+scikit-image
+numpy
+napari

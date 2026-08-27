@@ -48,7 +48,7 @@ def run_pipeline(raw_vol, out_dir, workers=8):
         
     # 4. Vectorization and Graph Tracing
     if not os.path.exists(swc_out):
-        cmd = ["python", "-u", "trace_and_connect_skeletons.py", "--mask", skeleton_mask, "--output", swc_out, "--gap", "15", "--sample_rate", "5"]
+        cmd = ["python", "-u", "trace_and_connect_skeletons.py", "--mask", skeleton_mask, "--output", swc_out, "--gap", "15", "--sample_rate", "10"]
         run_command(cmd)
     else:
         print(f"Skipping Vectorization, {swc_out} exists.")
