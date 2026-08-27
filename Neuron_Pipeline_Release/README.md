@@ -37,5 +37,20 @@ Once the extraction completes, you can view the pixel-aligned `.swc` over your r
 python visualize_skeletons.py --volume "..\data_046\F0046_multichannel_cmle_ch03.tif" --swc "..\output\my_neurons.swc"
 ```
 
+### 4. Batch Processing via CSV
+If you have multiple volumes to process, create a `.csv` file with two headers: `input` and `output`.
+
+**example_batch.csv**:
+```csv
+input,output
+..\data\volume1.tif,..\output\vol1.swc
+..\data\volume2.tif,..\output\vol2.swc
+```
+
+Then run the batch processor:
+```bash
+python batch_process.py example_batch.csv
+```
+
 ## Requirements
 See `requirements.txt`. Requires an NVIDIA GPU for CuPy acceleration.
