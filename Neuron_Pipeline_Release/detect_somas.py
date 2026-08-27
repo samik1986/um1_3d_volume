@@ -2,7 +2,7 @@
 detect_somas.py (neurite_detection)
 
 Author: Samik Banerjee
-Date: June 5, 2026
+Date: August 28, 2026
 GitHub: https://github.com/samik1986/um1_3d_volume
 
 GPU-accelerated tiled soma detection using CuPy.

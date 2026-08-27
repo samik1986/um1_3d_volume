@@ -2,7 +2,7 @@
 visualize_skeletons.py (neurite_detection)
 
 Author: Samik Banerjee
-Date: June 5, 2026
+Date: August 28, 2026
 GitHub: https://github.com/samik1986/um1_3d_volume
 
 Napari-based interactive 3D viewer for SWC files overlaid on volume data.
