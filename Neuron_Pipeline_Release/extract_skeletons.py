@@ -15,7 +15,7 @@ def run_command(cmd):
         exit(1)
     print(f"\nCompleted in {time.time()-start:.2f}s\n")
 
-def run_pipeline(input_vol, output_swc, keep_intermediates, workers):
+def run_pipeline(input_vol, output_swc, keep_intermediates, workers, res_x, res_y, res_z):
     out_dir = os.path.dirname(os.path.abspath(output_swc))
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
@@ -56,7 +56,16 @@ def run_pipeline(input_vol, output_swc, keep_intermediates, workers):
     # 4. Vectorization and Graph Tracing
     # The trace script automatically generates output_swc and output_swc_microns.swc
     if not os.path.exists(output_swc):
-        cmd = ["python", "-u", "trace_and_connect_skeletons.py", "--mask", skeleton_mask, "--output", output_swc, "--gap", "15", "--sample_rate", "10"]
+        cmd = [
+            "python", "-u", "trace_and_connect_skeletons.py", 
+            "--mask", skeleton_mask, 
+            "--output", output_swc, 
+            "--gap", "15", 
+            "--sample_rate", "10",
+            "--scale_x", str(res_x),
+            "--scale_y", str(res_y),
+            "--scale_z", str(res_z)
+        ]
         run_command(cmd)
     else:
         print(f"Skipping Vectorization, {output_swc} exists.")
@@ -83,6 +92,9 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output_swc', required=True, help="Path to save the output SWC (e.g. out/neuron.swc). The _microns.swc will be generated automatically alongside it.")
     parser.add_argument('--keep_intermediates', action='store_true', help="Do not delete intermediate neurite and skeleton masks")
     parser.add_argument('--workers', type=int, default=8, help="Number of CPU workers for skeletonization")
+    parser.add_argument('--res_x', type=float, default=0.1102, help="X resolution in microns/pixel")
+    parser.add_argument('--res_y', type=float, default=0.1102, help="Y resolution in microns/pixel")
+    parser.add_argument('--res_z', type=float, default=0.5, help="Z resolution in microns/pixel")
     args = parser.parse_args()
     
-    run_pipeline(args.input, args.output_swc, args.keep_intermediates, args.workers)
+    run_pipeline(args.input, args.output_swc, args.keep_intermediates, args.workers, args.res_x, args.res_y, args.res_z)

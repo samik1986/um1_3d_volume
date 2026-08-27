@@ -7,6 +7,9 @@ def main():
     parser = argparse.ArgumentParser(description="Batch process multiple volumes from a CSV file using the pipeline.")
     parser.add_argument('csv_file', help="Path to the CSV file (must have 'input' and 'output' columns as headers)")
     parser.add_argument('--keep_intermediates', action='store_true', help="Keep intermediate mask files for debugging")
+    parser.add_argument('--res_x', type=float, default=0.1102, help="X resolution in microns/pixel")
+    parser.add_argument('--res_y', type=float, default=0.1102, help="Y resolution in microns/pixel")
+    parser.add_argument('--res_z', type=float, default=0.5, help="Z resolution in microns/pixel")
     args = parser.parse_args()
 
     if not os.path.exists(args.csv_file):
@@ -32,7 +35,14 @@ def main():
             print(f"BATCH FILE [{row_idx}]: {input_vol} -> {output_swc}")
             print(f"========================================================")
             
-            cmd = ["python", "-u", "extract_skeletons.py", "-i", input_vol, "-o", output_swc]
+            cmd = [
+                "python", "-u", "extract_skeletons.py", 
+                "-i", input_vol, 
+                "-o", output_swc,
+                "--res_x", str(args.res_x),
+                "--res_y", str(args.res_y),
+                "--res_z", str(args.res_z)
+            ]
             if args.keep_intermediates:
                 cmd.append("--keep_intermediates")
             

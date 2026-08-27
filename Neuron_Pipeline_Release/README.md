@@ -17,6 +17,8 @@ python extract_skeletons.py -i <path_to_3d_volume.tif> -o <path_to_output.swc>
 
 *(Optional: Add `--keep_intermediates` if you want to inspect the raw Frangi mask and raw Medial Axis Transform output)*
 
+*(Optional: Add `--res_x`, `--res_y`, and `--res_z` to specify the physical pixel resolution in microns. Defaults are X: 0.1102, Y: 0.1102, Z: 0.5)*
+
 ## Examples
 
 ### 1. Standard Extraction
