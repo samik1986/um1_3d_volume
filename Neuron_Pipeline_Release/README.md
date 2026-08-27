@@ -2,7 +2,7 @@
 
 **Author:** Samik Banerjee  
 **Last updated on:** August 28, 2026  
-**GitHub:** [samik1986/um1_3d_volume](https://github.com/samik1986/um1_3d_volume/Neuron_Pipeline_Release)  
+**GitHub:** [samik1986/um1_3d_volume/Neuron_Pipeline_Release](https://github.com/samik1986/um1_3d_volume/Neuron_Pipeline_Release)  
 
 ---
 
