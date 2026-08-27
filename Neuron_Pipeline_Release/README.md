@@ -1,5 +1,11 @@
 # 3D Neuron Skeletonization Pipeline
 
+**Author:** Samik Banerjee  
+**Date:** August 28, 2026  
+**GitHub:** [samik1986/um1_3d_volume](https://github.com/samik1986/um1_3d_volume)  
+
+---
+
 This package contains everything needed to extract ultra-clean, faint dendritic trees from 3D volume imaging using GPU-accelerated Frangi filtering and aggressive structural graph tracing.
 
 ## Usage
