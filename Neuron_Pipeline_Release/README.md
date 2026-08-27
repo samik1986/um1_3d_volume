@@ -33,13 +33,19 @@ If you want to view the raw Frangi filter output or the raw Medial Axis Transfor
 python extract_skeletons.py -i "..\data_046\F0046_multichannel_cmle_ch03.tif" -o "..\output\my_neurons.swc" --keep_intermediates
 ```
 
-### 3. Visualizing the Result
+### 3. Extraction with Custom Physical Resolution
+If your imaging setup uses a different voxel size, you can override the defaults (X: 0.1102, Y: 0.1102, Z: 0.5) by specifying the XYZ resolution in microns/pixel.
+```bash
+python extract_skeletons.py -i "..\data_046\F0046_multichannel_cmle_ch03.tif" -o "..\output\my_neurons.swc" --res_x 0.3 --res_y 0.3 --res_z 1.0
+```
+
+### 4. Visualizing the Result
 Once the extraction completes, you can view the pixel-aligned `.swc` over your raw volume in Napari using the provided visualizer.
 ```bash
 python visualize_skeletons.py --volume "..\data_046\F0046_multichannel_cmle_ch03.tif" --swc "..\output\my_neurons.swc"
 ```
 
-### 4. Batch Processing via CSV
+### 5. Batch Processing via CSV
 If you have multiple volumes to process, create a `.csv` file with two headers: `input` and `output`.
 
 **example_batch.csv**:
@@ -49,7 +55,7 @@ input,output
 ..\data\volume2.tif,..\output\vol2.swc
 ```
 
-Then run the batch processor:
+Then run the batch processor (you can also pass `--res_x`, `--res_y`, `--res_z` here!):
 ```bash
 python batch_process.py example_batch.csv
 ```
