@@ -1,3 +1,12 @@
+"""
+extract_skeletons.py (neurite_detection)
+
+Author: Samik Banerjee
+Date: June 5, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+
+Main wrapper script to run the 3D neuron skeletonization pipeline.
+"""
 import os
 import subprocess
 import time

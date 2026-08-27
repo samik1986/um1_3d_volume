@@ -1,3 +1,12 @@
+"""
+trace_and_connect_skeletons.py (neurite_detection)
+
+Author: Samik Banerjee
+Date: June 5, 2026
+GitHub: https://github.com/samik1986/um1_3d_volume
+
+Graph-based backbone tracing, pruning, and micron-scaling of 3D skeletons.
+"""
 import argparse
 import tifffile
 import numpy as np
