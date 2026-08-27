@@ -2,7 +2,7 @@
 skeletonize_fast.py (neurite_detection)
 
 Author: Samik Banerjee
-Date: August 28, 2026
+Last updated on: August 28, 2026
 GitHub: https://github.com/samik1986/um1_3d_volume
 
 Multi-processed 3D Medial Axis Transform skeletonization.

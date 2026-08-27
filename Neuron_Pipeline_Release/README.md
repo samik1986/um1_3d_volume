@@ -1,8 +1,8 @@
 # 3D Neuron Skeletonization Pipeline
 
 **Author:** Samik Banerjee  
-**Date:** August 28, 2026  
-**GitHub:** [samik1986/um1_3d_volume](https://github.com/samik1986/um1_3d_volume)  
+**Last updated on:** August 28, 2026  
+**GitHub:** [samik1986/um1_3d_volume](https://github.com/samik1986/um1_3d_volume/Neuron_Pipeline_Release)  
 
 ---
 

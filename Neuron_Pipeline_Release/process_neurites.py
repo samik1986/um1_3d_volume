@@ -2,7 +2,7 @@
 process_neurites.py (neurite_detection)
 
 Author: Samik Banerjee
-Date: August 28, 2026
+Last updated on: August 28, 2026
 GitHub: https://github.com/samik1986/um1_3d_volume
 
 High-speed GPU-accelerated Frangi vesselness filter for neurite detection.

@@ -2,7 +2,7 @@
 batch_process.py (neurite_detection)
 
 Author: Samik Banerjee
-Date: August 28, 2026
+Last updated on: August 28, 2026
 GitHub: https://github.com/samik1986/um1_3d_volume
 
 Batch processor for the 3D neuron skeletonization pipeline using CSV inputs.
