@@ -55,9 +55,14 @@ input,output
 ..\data\volume2.tif,..\output\vol2.swc
 ```
 
-Then run the batch processor (you can also pass `--res_x`, `--res_y`, `--res_z` here!):
+Then run the standard batch processor:
 ```bash
 python batch_process.py example_batch.csv
+```
+
+**Run Batch with Custom Resolutions & Keep Intermediates:**
+```bash
+python batch_process.py example_batch.csv --keep_intermediates --res_x 0.3 --res_y 0.3 --res_z 1.0
 ```
 
 ## Requirements
