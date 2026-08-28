@@ -101,6 +101,8 @@ def validate_swc(filepath):
     # Segment Lengths
     total_length = 0.0
     component_lengths = []
+    neuron_lengths = []
+    small_frag_lengths = []
     
     for comp in components:
         comp_len = 0.0
@@ -113,22 +115,39 @@ def validate_swc(filepath):
             total_length += dist
         component_lengths.append(comp_len)
         
+        # Categorize (using 100 units as biological threshold)
+        if comp_len >= 100.0:
+            neuron_lengths.append(comp_len)
+        else:
+            small_frag_lengths.append(comp_len)
+            
     max_comp_length = max(component_lengths) if component_lengths else 0.0
     min_comp_length = min(component_lengths) if component_lengths else 0.0
     avg_comp_length = np.mean(component_lengths) if component_lengths else 0.0
+    
+    num_neurons = len(neuron_lengths)
+    num_small_frags = len(small_frag_lengths)
+    max_neuron_len = max(neuron_lengths) if neuron_lengths else 0.0
+    min_neuron_len = min(neuron_lengths) if neuron_lengths else 0.0
+    avg_neuron_len = np.mean(neuron_lengths) if neuron_lengths else 0.0
     
     print("\n--- Graph Topological Metrics ---")
     print(f"Total Nodes       : {num_nodes}")
     print(f"Total Edges       : {num_edges}")
     print(f"Total Cable Length: {total_length:.2f} units")
-    print(f"Max Component Len : {max_comp_length:.2f} units")
-    print(f"Min Component Len : {min_comp_length:.2f} units")
-    print(f"Avg Component Len : {avg_comp_length:.2f} units")
     print(f"Isolated Nodes    : {isolated}")
-    print(f"Fragments         : {num_components} (Ideal neurons have 1 main tree)")
+    print(f"Total Fragments   : {num_components}")
     print(f"Cycles / Loops    : {num_cycles} (Ideal neurons have 0)")
     print(f"Endpoints (Leaves): {endpoints}")
     print(f"Branch Points     : {branchpoints}")
+    
+    print("\n--- Biological Neuron Spans (Threshold >= 100 units) ---")
+    print(f"Neurons Detected  : {num_neurons}")
+    print(f"Small Fragments   : {num_small_frags}")
+    if num_neurons > 0:
+        print(f"Max Neuronal Span : {max_neuron_len:.2f} units")
+        print(f"Min Neuronal Span : {min_neuron_len:.2f} units")
+        print(f"Avg Neuronal Span : {avg_neuron_len:.2f} units")
     
     # 3. Neuron Heuristic Check
     print("\n--- Biological Neuron Assessment ---")
