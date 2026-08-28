@@ -11,13 +11,15 @@ to verify if it physically resembles a valid neuron tree structure.
 import argparse
 import os
 import networkx as nx
+import math
+import numpy as np
 
 def validate_swc(filepath):
     print(f"\n========================================================")
     print(f"Validating SWC: {os.path.basename(filepath)}")
     print(f"========================================================")
     if not os.path.exists(filepath):
-        print("❌ Error: File not found.")
+        print("[FAIL] Error: File not found.")
         return
     
     nodes = {}
@@ -56,10 +58,10 @@ def validate_swc(filepath):
                 syntax_errors += 1
     
     if syntax_errors > 0:
-        print(f"\n❌ Syntax Validation Failed with {syntax_errors} errors.")
+        print(f"\n[FAIL] Syntax Validation Failed with {syntax_errors} errors.")
         return
     else:
-        print("✅ Syntax Validation: PASSED.")
+        print("[PASS] Syntax Validation: PASSED.")
     
     # 2. Graph Topological Validation
     G = nx.Graph()
@@ -69,7 +71,7 @@ def validate_swc(filepath):
     missing_parents = len(edges) - len(valid_edges)
     
     if missing_parents > 0:
-        print(f"⚠️ Graph Warning: {missing_parents} edges reference non-existent parent IDs.")
+        print(f"[WARN] Graph Warning: {missing_parents} edges reference non-existent parent IDs.")
         
     G.add_edges_from(valid_edges)
     
@@ -77,7 +79,7 @@ def validate_swc(filepath):
     num_edges = G.number_of_edges()
     
     if num_nodes == 0:
-        print("❌ Graph Validation: FAILED (Empty Graph).")
+        print("[FAIL] Graph Validation: FAILED (Empty Graph).")
         return
         
     components = list(nx.connected_components(G))
@@ -96,9 +98,30 @@ def validate_swc(filepath):
     branchpoints = sum(1 for n, d in degrees.items() if d > 2)
     isolated = sum(1 for n, d in degrees.items() if d == 0)
     
+    # Segment Lengths
+    total_length = 0.0
+    component_lengths = []
+    
+    for comp in components:
+        comp_len = 0.0
+        subgraph = G.subgraph(comp)
+        for u, v in subgraph.edges():
+            p1 = nodes[u]
+            p2 = nodes[v]
+            dist = math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2 + (p1[2]-p2[2])**2)
+            comp_len += dist
+            total_length += dist
+        component_lengths.append(comp_len)
+        
+    max_comp_length = max(component_lengths) if component_lengths else 0.0
+    avg_comp_length = np.mean(component_lengths) if component_lengths else 0.0
+    
     print("\n--- Graph Topological Metrics ---")
     print(f"Total Nodes       : {num_nodes}")
     print(f"Total Edges       : {num_edges}")
+    print(f"Total Cable Length: {total_length:.2f} units")
+    print(f"Max Component Len : {max_comp_length:.2f} units")
+    print(f"Avg Component Len : {avg_comp_length:.2f} units")
     print(f"Isolated Nodes    : {isolated}")
     print(f"Fragments         : {num_components} (Ideal neurons have 1 main tree)")
     print(f"Cycles / Loops    : {num_cycles} (Ideal neurons have 0)")
@@ -111,30 +134,37 @@ def validate_swc(filepath):
     
     # Cycle check
     if num_cycles > 0:
-        print("❌ FAILED: Found cycles (meshes/spiderwebs). Real dendritic trees do not have loops.")
+        print("[FAIL] Found cycles (meshes/spiderwebs). Real dendritic trees do not have loops.")
         is_neuron = False
     else:
-        print("✅ PASSED: No cycles detected. Topology is a valid tree/forest.")
+        print("[PASS] No cycles detected. Topology is a valid tree/forest.")
         
     # Branching check
     if branchpoints == 0 and num_nodes > 10:
-        print("⚠️ WARNING: No branch points found. Looks like a single unbranched fiber.")
+        print("[WARN] No branch points found. Looks like a single unbranched fiber.")
     elif branchpoints > 0:
-        print("✅ PASSED: Branching structure detected.")
+        print("[PASS] Branching structure detected.")
         
     # Fragmentation check
     if num_components > max(20, num_nodes * 0.05):
-        print(f"❌ FAILED: Too many disconnected fragments ({num_components}). Likely severe noise or bad thresholding.")
+        print(f"[FAIL] Too many disconnected fragments ({num_components}). Likely severe noise or bad thresholding.")
         is_neuron = False
     elif num_components > 1:
-        print(f"⚠️ WARNING: Tree is broken into {num_components} disconnected components.")
+        print(f"[WARN] Tree is broken into {num_components} disconnected components.")
     else:
-        print("✅ PASSED: Single continuous connected component.")
+        print("[PASS] Single continuous connected component.")
+        
+    # Length check
+    if max_comp_length < 100:
+        print(f"[FAIL] Maximum continuous segment length is very small ({max_comp_length:.2f}). This indicates background noise speckles, not a long dendritic structure.")
+        is_neuron = False
+    else:
+        print(f"[PASS] Primary structure has significant biological length ({max_comp_length:.2f} units).")
         
     if is_neuron:
-        print("\n=> CONCLUSION: The SWC geometry mathematically resembles a valid neuron tree structure! 🚀")
+        print("\n=> CONCLUSION: The SWC geometry mathematically resembles a valid neuron tree structure! [SUCCESS]")
     else:
-        print("\n=> CONCLUSION: The SWC geometry has artifacts and DOES NOT resemble a clean neuron tree. ⚠️")
+        print("\n=> CONCLUSION: The SWC geometry has artifacts and DOES NOT resemble a clean neuron tree. [WARNING]")
     print("========================================================\n")
 
 if __name__ == '__main__':
