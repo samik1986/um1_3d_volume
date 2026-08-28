@@ -114,6 +114,7 @@ def validate_swc(filepath):
         component_lengths.append(comp_len)
         
     max_comp_length = max(component_lengths) if component_lengths else 0.0
+    min_comp_length = min(component_lengths) if component_lengths else 0.0
     avg_comp_length = np.mean(component_lengths) if component_lengths else 0.0
     
     print("\n--- Graph Topological Metrics ---")
@@ -121,6 +122,7 @@ def validate_swc(filepath):
     print(f"Total Edges       : {num_edges}")
     print(f"Total Cable Length: {total_length:.2f} units")
     print(f"Max Component Len : {max_comp_length:.2f} units")
+    print(f"Min Component Len : {min_comp_length:.2f} units")
     print(f"Avg Component Len : {avg_comp_length:.2f} units")
     print(f"Isolated Nodes    : {isolated}")
     print(f"Fragments         : {num_components} (Ideal neurons have 1 main tree)")
@@ -147,8 +149,7 @@ def validate_swc(filepath):
         
     # Fragmentation check
     if num_components > max(20, num_nodes * 0.05):
-        print(f"[FAIL] Too many disconnected fragments ({num_components}). Likely severe noise or bad thresholding.")
-        is_neuron = False
+        print(f"[WARN] Large number of disconnected fragments ({num_components}). If this is a single neuron, it is heavily fragmented. If this is a collection of multiple neurons/fragments, this is expected.")
     elif num_components > 1:
         print(f"[WARN] Tree is broken into {num_components} disconnected components.")
     else:
