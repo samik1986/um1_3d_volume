@@ -131,6 +131,10 @@ def validate_swc(filepath):
     min_neuron_len = min(neuron_lengths) if neuron_lengths else 0.0
     avg_neuron_len = np.mean(neuron_lengths) if neuron_lengths else 0.0
     
+    max_frag_len = max(small_frag_lengths) if small_frag_lengths else 0.0
+    min_frag_len = min(small_frag_lengths) if small_frag_lengths else 0.0
+    avg_frag_len = np.mean(small_frag_lengths) if small_frag_lengths else 0.0
+    
     print("\n--- Graph Topological Metrics ---")
     print(f"Total Nodes       : {num_nodes}")
     print(f"Total Edges       : {num_edges}")
@@ -143,11 +147,16 @@ def validate_swc(filepath):
     
     print("\n--- Biological Neuron Spans (Threshold >= 100 units) ---")
     print(f"Neurons Detected  : {num_neurons}")
-    print(f"Small Fragments   : {num_small_frags}")
     if num_neurons > 0:
         print(f"Max Neuronal Span : {max_neuron_len:.2f} units")
         print(f"Min Neuronal Span : {min_neuron_len:.2f} units")
         print(f"Avg Neuronal Span : {avg_neuron_len:.2f} units")
+        
+    print(f"\nSmall Fragments   : {num_small_frags} (Threshold < 100 units)")
+    if num_small_frags > 0:
+        print(f"Max Fragment Span : {max_frag_len:.2f} units")
+        print(f"Min Fragment Span : {min_frag_len:.2f} units")
+        print(f"Avg Fragment Span : {avg_frag_len:.2f} units")
     
     # 3. Neuron Heuristic Check
     print("\n--- Biological Neuron Assessment ---")
