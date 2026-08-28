@@ -44,6 +44,16 @@ Here is a breakdown of the four core steps:
     - Identifies completely isolated lines (no branches). If an isolated line is shorter than **150 pixels**, it is considered background speckle noise and deleted.
   - Finally, it downsamples the remaining long, pristine strings (e.g., takes every 10th point) and physically scales the geometry by the provided XYZ resolution (`--res_x`, `--res_y`, `--res_z`). The result is saved to standard `.swc` formats.
 
+### 5. Topological Validation (`validate_neuron_swc.py`)
+- **Objective:** Mathematically verify that the generated SWC output actually represents valid biological dendritic geometry, rather than noise or meshes.
+- **Method:**
+  - Evaluates standard 7-column SWC syntax correctness.
+  - Reconstructs the physical graph and mathematically checks for **cycles (loops)**. Real dendritic trees have no loops; if loops exist, the geometry is physically flawed (spiderweb noise).
+  - Calculates physical Euclidean span lengths of all continuous fragments.
+  - Groups fragments into biological **"Neurons"** (length >= 100 units) and **"Small Fragments"** (length < 100 units, likely noise speckles).
+  - Evaluates topological degree to detect the presence of biological branch points and endpoints.
+  - Automatically fails/warns if the tree is overly shattered or contains non-biological loops, confirming whether the pipeline's pruning steps were successful.
+
 </details>
 
 ---
@@ -84,16 +94,22 @@ python extract_skeletons.py -i "..\data_046\F0046_multichannel_cmle_ch03.tif" -o
 ### 3. Extraction with Custom Physical Resolution
 If your imaging setup uses a different voxel size, you can override the defaults (X: 0.1102, Y: 0.1102, Z: 0.5) by specifying the XYZ resolution in microns/pixel.
 ```bash
-python extract_skeletons.py -i "..\data_046\F0046_multichannel_cmle_ch03.tif" -o "..\output\my_neurons.swc" --res_x 0.3 --res_y 0.3 --res_z 1.0
+python extract_skeletons.py -i "..\data_046\F0046_multichannel_cmle_ch03.tif" -o "..\output\my_neurons.swc" --res_x 0.22 --res_y 0.22 --res_z 1.0
 ```
 
 ### 4. Visualizing the Result
-Once the extraction completes, you can view the pixel-aligned `.swc` over your raw volume in Napari using the provided visualizer.
+Use the included `visualize_skeletons.py` script to open an interactive Napari 3D viewer. You can load both the original TIFF volume and the output SWC file to see the exact structural overlay.
 ```bash
-python visualize_skeletons.py --volume "..\data_046\F0046_multichannel_cmle_ch03.tif" --swc "..\output\my_neurons.swc"
+python visualize_skeletons.py "..\data_046\F0046_multichannel_cmle_ch03.tif" "..\output\my_neurons.swc"
 ```
 
-### 5. Batch Processing via CSV
+### 5. Validate the Output
+Use the included validation script to mathematically check the generated SWC file for syntax errors, biological span sizes, and topological correctness (ensuring no non-biological loops/meshes are present).
+```bash
+python validate_neuron_swc.py "..\output\my_neurons.swc"
+```
+
+### 6. Batch Processing via CSV
 If you have multiple volumes to process, create a `.csv` file with two headers: `input` and `output`.
 
 **example_batch.csv**:

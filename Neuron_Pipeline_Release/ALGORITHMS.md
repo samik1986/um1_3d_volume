@@ -39,3 +39,13 @@ Here is a breakdown of the four core steps:
     - Identifies all paths from branch points to endpoints ("twigs"). If a twig is shorter than **80 pixels**, it is considered a false surface branch and deleted.
     - Identifies completely isolated lines (no branches). If an isolated line is shorter than **150 pixels**, it is considered background speckle noise and deleted.
   - Finally, it downsamples the remaining long, pristine strings (e.g., takes every 10th point) and physically scales the geometry by the provided XYZ resolution (`--res_x`, `--res_y`, `--res_z`). The result is saved to standard `.swc` formats.
+
+## 5. Topological Validation (`validate_neuron_swc.py`)
+- **Objective:** Mathematically verify that the generated SWC output actually represents valid biological dendritic geometry, rather than noise or meshes.
+- **Method:**
+  - Evaluates standard 7-column SWC syntax correctness.
+  - Reconstructs the physical graph and mathematically checks for **cycles (loops)**. Real dendritic trees have no loops; if loops exist, the geometry is physically flawed (spiderweb noise).
+  - Calculates physical Euclidean span lengths of all continuous fragments.
+  - Groups fragments into biological **"Neurons"** (length >= 100 units) and **"Small Fragments"** (length < 100 units, likely noise speckles).
+  - Evaluates topological degree to detect the presence of biological branch points and endpoints.
+  - Automatically fails/warns if the tree is overly shattered or contains non-biological loops, confirming whether the pipeline's pruning steps were successful.
