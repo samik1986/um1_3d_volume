@@ -191,9 +191,12 @@ def validate_swc(filepath):
         print(f"[PASS] Primary structure has significant biological length ({max_comp_length:.2f} units).")
         
     if is_neuron:
-        print("\n=> CONCLUSION: The SWC geometry mathematically resembles a valid neuron tree structure! [SUCCESS]")
+        if num_components > 1:
+            print("\n=> CONCLUSION: The SWC geometry mathematically resembles a valid neuron forest of multiple neuronal trees or neuronal fragments! [SUCCESS]")
+        else:
+            print("\n=> CONCLUSION: The SWC geometry mathematically resembles a valid single neuron tree structure! [SUCCESS]")
     else:
-        print("\n=> CONCLUSION: The SWC geometry has artifacts and DOES NOT resemble a clean neuron tree. [WARNING]")
+        print("\n=> CONCLUSION: The SWC geometry has artifacts and DOES NOT resemble a clean neuron tree/forest. [WARNING]")
     print("========================================================\n")
 
 if __name__ == '__main__':
